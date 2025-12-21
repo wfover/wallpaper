@@ -28,8 +28,14 @@ const actualDimensions = ref({ width: 0, height: 0 })
 // GSAP 入场动画
 watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
+    // 禁止背景滚动
+    document.body.classList.add('modal-open')
     await nextTick()
     animateIn()
+  }
+  else {
+    // 恢复背景滚动
+    document.body.classList.remove('modal-open')
   }
 })
 
@@ -104,33 +110,6 @@ watch(() => props.wallpaper, () => {
   actualDimensions.value = { width: 0, height: 0 }
 })
 
-// 质量标签（基于真实分辨率动态计算）
-const quality = computed(() => {
-  if (actualDimensions.value.width > 0) {
-    const res = getResolutionLabel(actualDimensions.value.width, actualDimensions.value.height)
-    // 映射标签到质量
-    const qualityMap = {
-      '5K+': '超清',
-      '4K+': '超清',
-      '4K': '4K',
-      '超清': '高清',
-      '高清': '高清',
-      '标清': '标清',
-    }
-    return qualityMap[res.label] || '高清'
-  }
-  return props.wallpaper?.quality || '高清'
-})
-
-const qualityType = computed(() => {
-  switch (quality.value) {
-    case '超清': return 'warning'
-    case '4K': return 'success'
-    case '高清': return 'primary'
-    default: return 'secondary'
-  }
-})
-
 // 分辨率信息 - 优先使用图片加载后的真实尺寸
 const resolution = computed(() => {
   if (actualDimensions.value.width > 0) {
@@ -191,12 +170,6 @@ async function handleDownload() {
   }
 }
 
-function handleOverlayClick(e) {
-  if (e.target === e.currentTarget) {
-    handleClose()
-  }
-}
-
 // Keyboard navigation
 function handleKeydown(e) {
   if (!props.isOpen)
@@ -221,12 +194,14 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  // 确保清理 modal-open 类
+  document.body.classList.remove('modal-open')
 })
 </script>
 
 <template>
   <Teleport to="body">
-    <div v-if="isOpen && wallpaper" ref="modalRef" class="modal-overlay" @click="handleOverlayClick">
+    <div v-if="isOpen && wallpaper" ref="modalRef" class="modal-overlay">
       <div ref="contentRef" class="modal-content">
         <!-- Close Button -->
         <button class="modal-close" aria-label="关闭" @click="handleClose">
@@ -302,10 +277,7 @@ onUnmounted(() => {
                 {{ wallpaper.filename }}
               </h3>
               <div class="info-tags">
-                <span class="tag" :class="[`tag--${qualityType}`]">
-                  {{ quality }}
-                </span>
-                <span class="tag" :class="[`tag--${resolution.type || 'dark'}`]">{{ resolution.label }}</span>
+                <span class="tag" :class="[`tag--${resolution.type || 'success'}`]">{{ resolution.label }}</span>
                 <span class="tag tag--secondary">{{ fileExt }}</span>
               </div>
             </div>

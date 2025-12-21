@@ -18,7 +18,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'search'])
 
 const searchBarRef = ref(null)
 const inputRef = ref(null)
@@ -92,6 +92,7 @@ function handleInput(e) {
 // 确认搜索
 function confirmSearch() {
   emit('update:modelValue', localValue.value)
+  emit('search', localValue.value)
   showSuggestions.value = false
   selectedIndex.value = -1
 }
@@ -133,6 +134,7 @@ function handleKeydown(e) {
 function selectSuggestion(filename) {
   localValue.value = filename
   emit('update:modelValue', filename)
+  emit('search', filename)
   showSuggestions.value = false
   selectedIndex.value = -1
   inputRef.value?.focus()

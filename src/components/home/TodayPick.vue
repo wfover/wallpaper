@@ -102,7 +102,7 @@ onMounted(() => {
       >
 
       <!-- Overlay on hover -->
-      <div class="today-pick__overlay">
+      <!-- <div class="today-pick__overlay">
         <div class="overlay-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8" />
@@ -111,7 +111,7 @@ onMounted(() => {
           </svg>
         </div>
         <span>查看大图</span>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -162,15 +162,15 @@ onMounted(() => {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   background: var(--color-bg-hover);
 
-  &:hover {
-    .today-pick__overlay {
-      opacity: 1;
-    }
+  // &:hover {
+  //   .today-pick__overlay {
+  //     opacity: 1;
+  //   }
 
-    .today-pick__image {
-      transform: scale(1.03);
-    }
-  }
+  //   .today-pick__image {
+  //     transform: scale(1.03);
+  //   }
+  // }
 }
 
 .today-pick__image {

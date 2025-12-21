@@ -6,9 +6,9 @@ import { computed, ref, watch } from 'vue'
 import { STORAGE_KEYS } from '@/utils/constants'
 import { debounce } from '@/utils/format'
 
-export function useFilter(wallpapers) {
-  // 搜索关键词
-  const searchQuery = ref('')
+export function useFilter(wallpapers, externalSearchQuery = null) {
+  // 搜索关键词（支持外部传入或内部管理）
+  const searchQuery = externalSearchQuery || ref('')
   const debouncedQuery = ref('')
 
   // 排序方式

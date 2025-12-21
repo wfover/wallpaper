@@ -1,5 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useDevice } from '@/composables/useDevice'
+import { useViewMode } from '@/composables/useViewMode'
+import { useWallpaperType } from '@/composables/useWallpaperType'
 import { CATEGORY_OPTIONS, FORMAT_OPTIONS, SORT_OPTIONS } from '@/utils/constants'
 
 const props = defineProps({
@@ -27,9 +30,47 @@ const props = defineProps({
 
 const emit = defineEmits(['update:sortBy', 'update:formatFilter', 'update:categoryFilter', 'reset'])
 
+const { isMobile } = useDevice()
+const { viewMode, setViewMode } = useViewMode()
+const { wallpaperType, setWallpaperType } = useWallpaperType()
+
+// 移动端筛选弹窗状态
+const showFilterPopup = ref(false)
+
+// 临时筛选值（用于弹窗内）
+const tempSortBy = ref(props.sortBy)
+const tempFormatFilter = ref(props.formatFilter)
+const tempCategoryFilter = ref(props.categoryFilter)
+const tempViewMode = ref(viewMode.value)
+const tempWallpaperType = ref(wallpaperType.value)
+
 // 是否有激活的筛选条件
 const hasActiveFilters = computed(() => {
   return props.formatFilter !== 'all' || props.categoryFilter !== 'all' || props.sortBy !== 'newest'
+})
+
+// 视图模式滑动指示器位置
+const viewModeSliderPosition = computed(() => {
+  switch (viewMode.value) {
+    case 'list':
+      return 'is-list'
+    case 'masonry':
+      return 'is-masonry'
+    default:
+      return 'is-grid'
+  }
+})
+
+// 激活的筛选数量
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (props.formatFilter !== 'all')
+    count++
+  if (props.categoryFilter !== 'all')
+    count++
+  if (props.sortBy !== 'newest')
+    count++
+  return count
 })
 
 function handleSortChange(value) {
@@ -50,6 +91,38 @@ function handleReset() {
   emit('update:categoryFilter', 'all')
   emit('reset')
 }
+
+// 移动端弹窗操作
+function openFilterPopup() {
+  // 同步当前值到临时值
+  tempSortBy.value = props.sortBy
+  tempFormatFilter.value = props.formatFilter
+  tempCategoryFilter.value = props.categoryFilter
+  tempViewMode.value = viewMode.value
+  tempWallpaperType.value = wallpaperType.value
+  showFilterPopup.value = true
+}
+
+function closeFilterPopup() {
+  showFilterPopup.value = false
+}
+
+function applyFilters() {
+  emit('update:sortBy', tempSortBy.value)
+  emit('update:formatFilter', tempFormatFilter.value)
+  emit('update:categoryFilter', tempCategoryFilter.value)
+  setViewMode(tempViewMode.value)
+  setWallpaperType(tempWallpaperType.value)
+  closeFilterPopup()
+}
+
+function resetFilters() {
+  tempSortBy.value = 'newest'
+  tempFormatFilter.value = 'all'
+  tempCategoryFilter.value = 'all'
+  tempViewMode.value = 'grid'
+  tempWallpaperType.value = 'desktop'
+}
 </script>
 
 <template>
@@ -62,10 +135,10 @@ function handleReset() {
         </span>
       </span>
 
-      <!-- 重置按钮 -->
+      <!-- PC 端重置按钮 -->
       <Transition name="fade">
         <button
-          v-if="hasActiveFilters"
+          v-if="hasActiveFilters && !isMobile"
           class="reset-btn"
           @click="handleReset"
         >
@@ -78,7 +151,84 @@ function handleReset() {
       </Transition>
     </div>
 
-    <div class="filter-right">
+    <!-- PC 端筛选项 -->
+    <div v-if="!isMobile" class="filter-right">
+      <!-- Wallpaper Type Toggle -->
+      <div class="wallpaper-type-toggle">
+        <!-- 滑动指示器 -->
+        <div class="type-slider" :class="{ 'is-mobile': wallpaperType === 'mobile' }" />
+        <button
+          class="type-btn"
+          :class="{ 'is-active': wallpaperType === 'desktop' }"
+          aria-label="电脑壁纸"
+          @click="setWallpaperType('desktop')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <path d="M8 21h8M12 17v4" />
+          </svg>
+          <span>电脑壁纸</span>
+        </button>
+        <button
+          class="type-btn"
+          :class="{ 'is-active': wallpaperType === 'mobile' }"
+          aria-label="手机壁纸"
+          @click="setWallpaperType('mobile')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2" />
+            <path d="M12 18h.01" />
+          </svg>
+          <span>手机壁纸</span>
+        </button>
+      </div>
+
+      <div class="filter-divider" />
+
+      <!-- View Mode Toggle -->
+      <div class="view-mode-toggle">
+        <!-- 滑动指示器 -->
+        <div class="view-mode-slider" :class="viewModeSliderPosition" />
+        <button
+          class="view-mode-btn"
+          :class="{ 'is-active': viewMode === 'grid' }"
+          aria-label="网格视图"
+          @click="setViewMode('grid')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+          </svg>
+        </button>
+        <button
+          class="view-mode-btn"
+          :class="{ 'is-active': viewMode === 'list' }"
+          aria-label="列表视图"
+          @click="setViewMode('list')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+          </svg>
+        </button>
+        <button
+          class="view-mode-btn"
+          :class="{ 'is-active': viewMode === 'masonry' }"
+          aria-label="瀑布流视图"
+          @click="setViewMode('masonry')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="10" />
+            <rect x="14" y="3" width="7" height="6" />
+            <rect x="3" y="16" width="7" height="5" />
+            <rect x="14" y="12" width="7" height="9" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="filter-divider" />
+
       <!-- Category Filter -->
       <div class="filter-item">
         <span class="filter-label">分类</span>
@@ -136,6 +286,185 @@ function handleReset() {
         </el-select>
       </div>
     </div>
+
+    <!-- 移动端筛选按钮 -->
+    <div v-else class="filter-right-mobile">
+      <button class="filter-btn" @click="openFilterPopup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+        </svg>
+        筛选
+        <span v-if="activeFilterCount > 0" class="filter-badge">{{ activeFilterCount }}</span>
+      </button>
+    </div>
+
+    <!-- 移动端筛选弹窗 - 使用 Teleport 确保层级 -->
+    <Teleport to="body">
+      <van-popup
+        v-model:show="showFilterPopup"
+        position="bottom"
+        round
+        :style="{ maxHeight: '80%' }"
+        class="filter-popup"
+        :teleport="null"
+        :close-on-click-overlay="false"
+      >
+        <div class="popup-content">
+          <!-- 弹窗头部 -->
+          <div class="popup-header">
+            <button class="popup-reset" @click="resetFilters">
+              重置
+            </button>
+            <span class="popup-title">筛选</span>
+            <button class="popup-close" @click="closeFilterPopup">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- 筛选选项 -->
+          <div class="popup-body">
+            <!-- 壁纸类型 -->
+            <div class="filter-group">
+              <h3 class="group-title">
+                壁纸类型
+              </h3>
+              <div class="option-grid wallpaper-type-grid">
+                <button
+                  class="option-btn type-option"
+                  :class="{ 'is-active': tempWallpaperType === 'desktop' }"
+                  @click="tempWallpaperType = 'desktop'"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                    <path d="M8 21h8M12 17v4" />
+                  </svg>
+                  <span>电脑壁纸</span>
+                </button>
+                <button
+                  class="option-btn type-option"
+                  :class="{ 'is-active': tempWallpaperType === 'mobile' }"
+                  @click="tempWallpaperType = 'mobile'"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" />
+                    <path d="M12 18h.01" />
+                  </svg>
+                  <span>手机壁纸</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 视图模式 -->
+            <div class="filter-group">
+              <h3 class="group-title">
+                视图
+              </h3>
+              <div class="option-grid view-mode-grid">
+                <button
+                  class="option-btn view-option"
+                  :class="{ 'is-active': tempViewMode === 'grid' }"
+                  @click="tempViewMode = 'grid'"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                  </svg>
+                  <span>网格</span>
+                </button>
+                <button
+                  class="option-btn view-option"
+                  :class="{ 'is-active': tempViewMode === 'list' }"
+                  @click="tempViewMode = 'list'"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+                  </svg>
+                  <span>列表</span>
+                </button>
+                <button
+                  class="option-btn view-option"
+                  :class="{ 'is-active': tempViewMode === 'masonry' }"
+                  @click="tempViewMode = 'masonry'"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="10" />
+                    <rect x="14" y="3" width="7" height="6" />
+                    <rect x="3" y="16" width="7" height="5" />
+                    <rect x="14" y="12" width="7" height="9" />
+                  </svg>
+                  <span>瀑布流</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 分类 -->
+            <div class="filter-group">
+              <h3 class="group-title">
+                分类
+              </h3>
+              <div class="option-grid">
+                <button
+                  v-for="option in CATEGORY_OPTIONS"
+                  :key="option.value"
+                  class="option-btn"
+                  :class="{ 'is-active': tempCategoryFilter === option.value }"
+                  @click="tempCategoryFilter = option.value"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- 格式 -->
+            <div class="filter-group">
+              <h3 class="group-title">
+                格式
+              </h3>
+              <div class="option-grid">
+                <button
+                  v-for="option in FORMAT_OPTIONS"
+                  :key="option.value"
+                  class="option-btn"
+                  :class="{ 'is-active': tempFormatFilter === option.value }"
+                  @click="tempFormatFilter = option.value"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- 排序 -->
+            <div class="filter-group">
+              <h3 class="group-title">
+                排序
+              </h3>
+              <div class="option-grid">
+                <button
+                  v-for="option in SORT_OPTIONS"
+                  :key="option.value"
+                  class="option-btn"
+                  :class="{ 'is-active': tempSortBy === option.value }"
+                  @click="tempSortBy = option.value"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 确认按钮 -->
+          <div class="popup-footer">
+            <button class="confirm-btn" @click="applyFilters">
+              确认筛选
+            </button>
+          </div>
+        </div>
+      </van-popup>
+    </Teleport>
   </div>
 </template>
 
@@ -151,6 +480,8 @@ function handleReset() {
   border-radius: $radius-lg;
   border: 1px solid var(--color-border);
   transition: all 0.3s ease;
+  // PC 端底部间距
+  margin-bottom: $spacing-lg;
 
   &.has-filters {
     border-color: var(--color-accent-light);
@@ -221,6 +552,142 @@ function handleReset() {
   gap: $spacing-lg;
 }
 
+// PC 端壁纸类型切换
+.wallpaper-type-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-hover);
+  border-radius: $radius-md;
+  padding: 4px;
+  position: relative;
+}
+
+// 滑动指示器
+.type-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: var(--color-bg-card);
+  border-radius: $radius-sm;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+
+  &.is-mobile {
+    transform: translateX(100%);
+  }
+}
+
+.type-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: $radius-sm;
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  position: relative;
+  z-index: 1;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+  }
+
+  span {
+    white-space: nowrap;
+  }
+
+  &:hover {
+    color: var(--color-text-primary);
+
+    svg {
+      transform: scale(1.1);
+    }
+  }
+
+  &.is-active {
+    color: var(--color-accent);
+  }
+}
+
+.view-mode-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-hover);
+  border-radius: $radius-md;
+  padding: 4px;
+  position: relative;
+}
+
+// 视图模式滑动指示器
+.view-mode-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 32px;
+  height: 32px;
+  background: var(--color-bg-card);
+  border-radius: $radius-sm;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+
+  &.is-list {
+    transform: translateX(32px);
+  }
+
+  &.is-masonry {
+    transform: translateX(64px);
+  }
+}
+
+.view-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: $radius-sm;
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  position: relative;
+  z-index: 1;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    color: var(--color-text-primary);
+
+    svg {
+      transform: scale(1.1);
+    }
+  }
+
+  &.is-active {
+    color: var(--color-accent);
+  }
+}
+
+.filter-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--color-border);
+}
+
 .filter-item {
   display: flex;
   align-items: center;
@@ -232,9 +699,223 @@ function handleReset() {
   font-weight: $font-weight-semibold;
   color: var(--color-text-primary);
   white-space: nowrap;
+}
 
-  @include mobile-only {
-    display: none;
+// 移动端筛选按钮
+.filter-right-mobile {
+  display: flex;
+  align-items: center;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: var(--color-accent);
+  }
+
+  &:active {
+    transform: scale(0.95);
+    background: var(--color-bg-hover);
+  }
+}
+
+.filter-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  background: var(--color-accent);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// 弹窗样式
+.filter-popup {
+  :deep(.van-popup) {
+    background: var(--color-bg-primary);
+  }
+}
+
+.popup-content {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-primary);
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.popup-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.popup-reset {
+  padding: 6px 12px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  background: transparent;
+
+  &:active {
+    color: var(--color-accent);
+  }
+}
+
+.popup-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--color-text-muted);
+  background: transparent;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.popup-body {
+  padding: 16px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.filter-group {
+  margin-bottom: 20px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.option-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option-btn {
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-hover);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.is-active {
+    color: var(--color-accent);
+    background: var(--color-accent-light);
+    font-weight: 500;
+  }
+}
+
+.view-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  padding: 12px 8px;
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  span {
+    font-size: 12px;
+  }
+}
+
+.view-mode-grid {
+  display: flex;
+  gap: 8px;
+}
+
+.wallpaper-type-grid {
+  display: flex;
+  gap: 8px;
+}
+
+.type-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  padding: 12px 8px;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  span {
+    font-size: 12px;
+  }
+}
+
+.popup-footer {
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.confirm-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: var(--color-accent);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+    background: var(--color-accent-hover);
   }
 }
 
@@ -254,6 +935,7 @@ function handleReset() {
 @include mobile-only {
   .filter-panel {
     padding: $spacing-sm $spacing-md;
+    margin-bottom: $spacing-md;
   }
 
   .filter-left {

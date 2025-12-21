@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
+import { VantResolver } from '@vant/auto-import-resolver'
 import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
@@ -10,12 +11,12 @@ import compression from 'vite-plugin-compression'
 export default defineConfig({
   plugins: [
     vue(),
-    // Element Plus 自动按需导入
+    // Element Plus + Vant 自动按需导入
     AutoImport({
-      resolvers: [ElementPlusResolver()],
+      resolvers: [ElementPlusResolver(), VantResolver()],
     }),
     Components({
-      resolvers: [ElementPlusResolver()],
+      resolvers: [ElementPlusResolver(), VantResolver()],
     }),
     // Gzip 压缩
     compression({
@@ -47,7 +48,9 @@ export default defineConfig({
       output: {
         manualChunks: {
           'vue': ['vue'],
+          'vue-router': ['vue-router'],
           'element-plus': ['element-plus'],
+          'vant': ['vant'],
         },
         // 优化文件名
         chunkFileNames: 'assets/js/[name]-[hash].js',

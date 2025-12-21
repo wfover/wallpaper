@@ -69,15 +69,22 @@ export const CATEGORY_OPTIONS = [
   { value: '未分类', label: '未分类' },
 ]
 
+// 壁纸类型选项（电脑壁纸 / 手机壁纸）
+export const WALLPAPER_TYPE_OPTIONS = [
+  { value: 'desktop', label: '电脑壁纸', icon: 'monitor' },
+  { value: 'mobile', label: '手机壁纸', icon: 'smartphone' },
+]
+
 // ========================================
 // 分辨率标签阈值（按长边判断，用于弹窗中根据真实图片尺寸动态生成标签）
 // ========================================
 export const RESOLUTION_THRESHOLDS = [
   { minWidth: 5120, label: '5K+', type: 'danger' },
-  { minWidth: 3840, label: '4K+', type: 'warning' },
-  { minWidth: 2560, label: '4K', type: 'success' },
-  { minWidth: 1920, label: '超清', type: 'info' },
-  { minWidth: 1280, label: '高清', type: 'primary' },
+  { minWidth: 3841, label: '4K+', type: 'warning' },
+  { minWidth: 3840, label: '4K', type: 'success' },
+  { minWidth: 2560, label: '2K', type: 'info' },
+  { minWidth: 1920, label: '超清', type: 'primary' },
+  { minWidth: 1280, label: '高清', type: 'secondary' },
   { minWidth: 0, label: '标清', type: 'secondary' },
 ]
 
@@ -93,4 +100,5 @@ export const STORAGE_KEYS = {
   SORT: 'wallpaper-gallery-sort',
   CATEGORY: 'wallpaper-gallery-category',
   VIEW_MODE: 'wallpaper-gallery-view-mode',
+  WALLPAPER_TYPE: 'wallpaper-gallery-wallpaper-type',
 }

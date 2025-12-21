@@ -1,5 +1,6 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { gsap } from 'gsap'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { usePagination } from '@/composables/usePagination'
 import { useViewMode } from '@/composables/useViewMode'
@@ -23,6 +24,10 @@ const props = defineProps({
 const emit = defineEmits(['select'])
 
 const { viewMode } = useViewMode()
+const gridRef = ref(null)
+const isAnimating = ref(false)
+// 用于控制实际显示的视图模式（延迟切换，确保动画正确）
+const displayViewMode = ref(viewMode.value)
 
 // 分页
 const wallpapersRef = computed(() => props.wallpapers)
@@ -35,6 +40,230 @@ const {
 
 // 用于控制列表显示的状态，避免闪烁
 const showGrid = ref(true)
+
+// 视图切换动画 - 炫酷 GSAP 效果
+watch(viewMode, async (newMode, oldMode) => {
+  if (!gridRef.value || isAnimating.value || newMode === oldMode)
+    return
+
+  isAnimating.value = true
+  const cards = gridRef.value.querySelectorAll('.wallpaper-card')
+
+  if (cards.length === 0) {
+    // 没有卡片时直接切换
+    displayViewMode.value = newMode
+    isAnimating.value = false
+    return
+  }
+
+  // 根据切换的视图类型选择不同的动画
+  const animationType = getAnimationType(oldMode, newMode)
+
+  // 阶段1: 卡片消失动画（保持旧布局）
+  await animateOut(cards, animationType)
+
+  // 阶段2: 切换到新布局
+  displayViewMode.value = newMode
+  await nextTick()
+
+  // 短暂延迟让布局完成
+  await new Promise(resolve => setTimeout(resolve, 50))
+
+  // 阶段3: 卡片出现动画（新布局）
+  const newCards = gridRef.value.querySelectorAll('.wallpaper-card')
+  await animateIn(newCards, animationType)
+
+  isAnimating.value = false
+})
+
+// 根据视图切换类型选择动画
+function getAnimationType(from, to) {
+  if (to === 'masonry')
+    return 'waterfall'
+  if (to === 'list')
+    return 'slide'
+  if (from === 'masonry')
+    return 'gather'
+  return 'morph'
+}
+
+// 卡片消失动画
+function animateOut(cards, type) {
+  return new Promise((resolve) => {
+    const tl = gsap.timeline({ onComplete: resolve })
+
+    switch (type) {
+      case 'waterfall':
+        // 瀑布流：卡片像水滴一样落下消失
+        tl.to(cards, {
+          y: 30,
+          opacity: 0,
+          scale: 0.9,
+          rotateX: 15,
+          duration: 0.3,
+          stagger: {
+            amount: 0.2,
+            from: 'start',
+          },
+          ease: 'power2.in',
+        })
+        break
+
+      case 'slide':
+        // 列表视图：卡片向左滑出
+        tl.to(cards, {
+          x: -50,
+          opacity: 0,
+          duration: 0.25,
+          stagger: {
+            amount: 0.15,
+            from: 'start',
+          },
+          ease: 'power2.in',
+        })
+        break
+
+      case 'gather':
+        // 从瀑布流切换：卡片向中心聚拢
+        tl.to(cards, {
+          scale: 0.8,
+          opacity: 0,
+          duration: 0.3,
+          stagger: {
+            amount: 0.2,
+            from: 'center',
+          },
+          ease: 'back.in(1.5)',
+        })
+        break
+
+      default:
+        // 默认：3D 翻转效果
+        tl.to(cards, {
+          rotateY: 90,
+          opacity: 0,
+          scale: 0.9,
+          duration: 0.3,
+          stagger: {
+            amount: 0.2,
+            from: 'random',
+          },
+          ease: 'power2.in',
+        })
+    }
+  })
+}
+
+// 卡片出现动画
+function animateIn(cards, type) {
+  return new Promise((resolve) => {
+    // 先重置所有卡片状态
+    gsap.set(cards, {
+      opacity: 0,
+      clearProps: 'transform',
+    })
+
+    const tl = gsap.timeline({ onComplete: resolve })
+
+    switch (type) {
+      case 'waterfall':
+        // 瀑布流：卡片从上方落下，像水滴一样有弹性
+        gsap.set(cards, { y: -40, scale: 0.9, rotateX: -15 })
+        tl.to(cards, {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          rotateX: 0,
+          duration: 0.5,
+          stagger: {
+            amount: 0.4,
+            from: 'start',
+            grid: 'auto',
+          },
+          ease: 'back.out(1.2)',
+        })
+        break
+
+      case 'slide':
+        // 列表视图：卡片从右侧滑入
+        gsap.set(cards, { x: 50 })
+        tl.to(cards, {
+          x: 0,
+          opacity: 1,
+          duration: 0.4,
+          stagger: {
+            amount: 0.3,
+            from: 'start',
+          },
+          ease: 'power2.out',
+        })
+        break
+
+      case 'gather':
+        // 网格视图：从中心向外扩散
+        gsap.set(cards, { scale: 0.5 })
+        tl.to(cards, {
+          scale: 1,
+          opacity: 1,
+          duration: 0.4,
+          stagger: {
+            amount: 0.3,
+            from: 'center',
+            grid: 'auto',
+          },
+          ease: 'back.out(1.7)',
+        })
+        break
+
+      default:
+        // 默认：3D 翻转进入
+        gsap.set(cards, { rotateY: -90, scale: 0.9 })
+        tl.to(cards, {
+          rotateY: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.4,
+          stagger: {
+            amount: 0.3,
+            from: 'random',
+            grid: 'auto',
+          },
+          ease: 'back.out(1.5)',
+        })
+    }
+  })
+}
+
+// 初始加载动画
+onMounted(() => {
+  if (gridRef.value && displayedItems.value.length > 0) {
+    nextTick(() => {
+      const cards = gridRef.value?.querySelectorAll('.wallpaper-card')
+      if (cards && cards.length > 0) {
+        gsap.fromTo(
+          cards,
+          {
+            opacity: 0,
+            y: 30,
+            scale: 0.95,
+          },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.5,
+            stagger: {
+              amount: 0.5,
+              from: 'start',
+              grid: 'auto',
+            },
+            ease: 'power2.out',
+          },
+        )
+      }
+    })
+  }
+})
 
 // 监听 wallpapers 变化，添加短暂的隐藏状态避免闪烁
 watch(() => props.wallpapers, async (newVal, oldVal) => {
@@ -78,8 +307,9 @@ function handleSelect(wallpaper) {
     <!-- Grid - 简化过渡，避免闪烁 -->
     <div
       v-else
+      ref="gridRef"
       class="wallpaper-grid"
-      :class="[`view-${viewMode}`, { 'is-hidden': !showGrid }]"
+      :class="[`view-${displayViewMode}`, { 'is-hidden': !showGrid, 'is-animating': isAnimating }]"
     >
       <WallpaperCard
         v-for="(wallpaper, index) in displayedItems"
@@ -87,7 +317,7 @@ function handleSelect(wallpaper) {
         :wallpaper="wallpaper"
         :index="index"
         :search-query="searchQuery"
-        :view-mode="viewMode"
+        :view-mode="displayViewMode"
         @click="handleSelect"
       />
     </div>
@@ -122,9 +352,17 @@ function handleSelect(wallpaper) {
   grid-template-columns: repeat(1, 1fr);
   gap: var(--grid-gap);
   transition: opacity 0.2s ease;
+  // 3D 透视效果，让动画更有深度
+  perspective: 1000px;
+  transform-style: preserve-3d;
 
   &.is-hidden {
     opacity: 0;
+  }
+
+  // 动画进行中禁用 hover 效果，避免干扰
+  &.is-animating {
+    pointer-events: none;
   }
 
   // 网格视图（默认）

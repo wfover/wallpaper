@@ -94,14 +94,24 @@ function handleClick() {
   }
 
   @include mobile-only {
-    right: $spacing-md;
-    bottom: $spacing-md;
-    width: 44px;
-    height: 44px;
+    right: 16px;
+    // 移动端底部适配安全区域
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: 48px;
+    height: 48px;
+    // 增强移动端阴影效果
+    box-shadow:
+      0 4px 12px rgba(99, 102, 241, 0.4),
+      0 0 0 3px rgba(99, 102, 241, 0.1);
 
     svg {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
+    }
+
+    &:active {
+      transform: scale(0.92);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
     }
   }
 }
