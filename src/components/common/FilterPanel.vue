@@ -406,6 +406,11 @@ function resetFilters() {
   transition: all 0.3s ease;
   margin-bottom: $spacing-lg;
 
+  // 吸顶效果（PC 和移动端通用）
+  position: sticky;
+  top: $header-height; // 固定在导航栏下方
+  z-index: 99; // 低于 AppHeader 的 100
+
   &.has-filters {
     border-color: var(--color-accent-light);
     background: linear-gradient(135deg, var(--color-bg-secondary) 0%, rgba(99, 102, 241, 0.03) 100%);
@@ -836,9 +841,6 @@ function resetFilters() {
 // 响应式
 @include mobile-only {
   .filter-panel {
-    position: sticky;
-    top: $header-height; // 固定在 AppHeader 下方
-    z-index: 99; // 低于 AppHeader 的 100
     padding: $spacing-sm $spacing-md;
     margin-bottom: $spacing-md;
   }
