@@ -360,6 +360,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   max-width: 500px;
+  width: 90vw; // 确保有足够宽度
+  min-height: 70vh; // 设置最小高度,避免骨架屏太小
   max-height: 90vh;
   background: var(--color-bg-card);
   border-radius: var(--radius-xl);
@@ -367,7 +369,9 @@ onUnmounted(() => {
   box-shadow: var(--shadow-xl);
 
   @include mobile-only {
+    width: 95vw;
     max-width: 100%;
+    min-height: 75vh; // 移动端更高一些
     max-height: 95vh;
   }
 }
