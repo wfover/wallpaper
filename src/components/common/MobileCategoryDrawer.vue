@@ -128,7 +128,7 @@ function closeDrawer() {
           <div class="subcategory-panel">
             <template v-if="hasSubcategories">
               <div class="subcategory-header">
-                <span>{{ tempCategory }}</span> 的子分类
+                <span>{{ tempCategory }}</span>
               </div>
               <div class="subcategory-grid">
                 <!-- 全部选项 -->
