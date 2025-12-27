@@ -41,13 +41,13 @@ function closeBanner() {
         <!-- PC端文案 -->
         <p class="banner-text desktop-text">
           <strong>欢迎来到壁纸画廊！</strong>
-          网站刚刚上线，目前收录博主精选高质量壁纸，<span class="highlight">每日更新</span>中。
+          网站刚刚上线，目前收录博主精选高质量壁纸，<span class="highlight">定期更新</span>中。
           PC/手机均可访问，记得收藏哦~
         </p>
         <!-- 移动端文案（更简洁） -->
         <p class="banner-text mobile-text">
           <strong>欢迎！</strong>
-          精选壁纸<span class="highlight">每日更新</span>，记得收藏~
+          精选壁纸<span class="highlight">定期更新</span>，记得收藏~
           <span class="tag">表情包即将上线</span>
         </p>
       </div>
