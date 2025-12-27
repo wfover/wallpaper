@@ -169,16 +169,13 @@ watch(() => props.wallpaper, () => {
   loadingOriginal.value = false
 })
 
-// 分辨率信息 - 始终显示原图的分辨率（来自 JSON 数据）
+// 分辨率信息 - 显示当前加载图片的分辨率（预览图或原图）
 const resolution = computed(() => {
-  if (props.wallpaper?.resolution) {
-    return props.wallpaper.resolution
-  }
-  // 如果 JSON 中没有分辨率数据，才使用图片加载后的真实尺寸
+  // 使用图片加载后的真实尺寸来计算分辨率标签
   if (actualDimensions.value.width > 0) {
     return getResolutionLabel(actualDimensions.value.width, actualDimensions.value.height)
   }
-  return { label: '1080P' }
+  return { label: '加载中', type: 'secondary' }
 })
 
 const fileExt = computed(() => props.wallpaper ? getFileExtension(props.wallpaper.filename).toUpperCase() : '')
