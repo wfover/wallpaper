@@ -898,7 +898,7 @@ onUnmounted(() => {
   margin-left: $spacing-xs;
   padding: 2px 6px;
   background: var(--color-bg-hover);
-  border-radius: $radius-xs;
+  border-radius: 4px;
 }
 
 // 原图信息卡片（突出显示原图质量，吸引用户下载）
