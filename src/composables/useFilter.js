@@ -116,10 +116,29 @@ export function useFilter(wallpapers, externalSearchQuery = null) {
   })
 
   // 当分类选项变化时，检查当前选中的分类是否仍然有效
-  watch(categoryOptions, (newOptions) => {
-    const validValues = newOptions.map(opt => opt.value)
-    if (!validValues.includes(categoryFilter.value)) {
+  watch(categoryOptions, (newOptions, oldOptions) => {
+    // 如果是首次加载（oldOptions 为空）或者分类列表完全变化（切换系列），重置筛选
+    if (!oldOptions || oldOptions.length === 0) {
+      return
+    }
+
+    // 检查分类列表是否发生了根本性变化（切换系列时会完全不同）
+    const oldCategories = new Set(oldOptions.map(opt => opt.value))
+    const newCategories = new Set(newOptions.map(opt => opt.value))
+    const hasSignificantChange = newOptions.length !== oldOptions.length
+      || [...newCategories].some(cat => !oldCategories.has(cat))
+
+    if (hasSignificantChange) {
+      // 系列切换导致分类完全变化，重置所有分类筛选
       categoryFilter.value = 'all'
+      subcategoryFilter.value = 'all'
+    }
+    else {
+      // 仅检查当前选中的分类是否仍然有效
+      const validValues = newOptions.map(opt => opt.value)
+      if (!validValues.includes(categoryFilter.value)) {
+        categoryFilter.value = 'all'
+      }
     }
   })
 
