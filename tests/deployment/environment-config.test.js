@@ -181,7 +181,7 @@ describe('environment Configuration Management', () => {
       expect(prodUmamiMatch[1]).not.toBe(stagingUmamiMatch[1])
     })
 
-    it('should have Supabase config only in production', () => {
+    it('should have Supabase config in production and development environments', () => {
       const prodContent = fs.readFileSync(envFiles.production, 'utf-8')
       const stagingContent = fs.readFileSync(envFiles.staging, 'utf-8')
       const devContent = fs.readFileSync(envFiles.development, 'utf-8')
@@ -190,9 +190,12 @@ describe('environment Configuration Management', () => {
       expect(prodContent).toContain('VITE_SUPABASE_URL')
       expect(prodContent).toContain('VITE_SUPABASE_ANON_KEY')
 
-      // 测试和开发环境不应该有 Supabase 配置
+      // 开发环境也需要 Supabase 配置（用于壁纸统计功能开发测试）
+      expect(devContent).toContain('VITE_SUPABASE_URL')
+      expect(devContent).toContain('VITE_SUPABASE_ANON_KEY')
+
+      // 测试环境不应该有 Supabase 配置
       expect(stagingContent).not.toContain('VITE_SUPABASE_URL')
-      expect(devContent).not.toContain('VITE_SUPABASE_URL')
     })
   })
 

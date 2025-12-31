@@ -95,12 +95,17 @@ export const IMAGE_PROXY = {
 
 // 排序选项
 export const SORT_OPTIONS = [
-  { value: 'newest', label: '最新优先', icon: 'clock' },
-  { value: 'oldest', label: '最早优先', icon: 'clock-reverse' },
-  { value: 'largest', label: '最大优先', icon: 'arrow-down' },
-  { value: 'smallest', label: '最小优先', icon: 'arrow-up' },
-  { value: 'name-asc', label: '名称 A-Z', icon: 'sort-alpha' },
-  { value: 'name-desc', label: '名称 Z-A', icon: 'sort-alpha-reverse' },
+  { value: 'newest', label: '🕐 最新优先', icon: 'clock' },
+  { value: 'popular', label: '🔥 最热门', icon: 'fire' },
+  { value: 'downloads', label: '📥 下载量最高', icon: 'download' },
+  { value: 'views', label: '👁️ 浏览量最高', icon: 'eye' },
+  { value: 'weekly-hot', label: '📅 本周热门', icon: 'calendar' },
+  { value: 'monthly-hot', label: '📆 本月热门', icon: 'calendar' },
+  { value: 'oldest', label: '🕰️ 最早优先', icon: 'clock-reverse' },
+  { value: 'largest', label: '📦 最大优先', icon: 'arrow-down' },
+  { value: 'smallest', label: '📄 最小优先', icon: 'arrow-up' },
+  { value: 'name-asc', label: '🔤 名称 A-Z', icon: 'sort-alpha' },
+  { value: 'name-desc', label: '🔡 名称 Z-A', icon: 'sort-alpha-reverse' },
 ]
 
 // 格式过滤选项

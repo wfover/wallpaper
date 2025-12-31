@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import CategoryDropdown from '@/components/common/CategoryDropdown.vue'
 import MobileCategoryDrawer from '@/components/common/MobileCategoryDrawer.vue'
 import { useDevice } from '@/composables/useDevice'
 import { useViewMode } from '@/composables/useViewMode'
@@ -62,37 +63,6 @@ const tempFormatFilter = ref(props.formatFilter)
 // 是否有激活的筛选条件
 const hasActiveFilters = computed(() => {
   return props.formatFilter !== 'all' || props.categoryFilter !== 'all' || props.subcategoryFilter !== 'all' || props.sortBy !== 'newest'
-})
-
-// PC 端级联选择器的值（数组格式：[category] 或 [category, subcategory]）
-const cascaderValue = computed(() => {
-  if (props.categoryFilter === 'all') {
-    return []
-  }
-  if (props.subcategoryFilter === 'all') {
-    return [props.categoryFilter]
-  }
-  return [props.categoryFilter, props.subcategoryFilter]
-})
-
-// PC 端级联选择器的选项（树形结构）
-const cascaderOptions = computed(() => {
-  return props.categoryOptions
-    .filter(opt => opt.value !== 'all') // 排除"全部"选项，cascader 用 clearable 实现
-    .map((opt) => {
-      const option = {
-        value: opt.value,
-        label: opt.label,
-      }
-      // 如果有二级分类，添加 children
-      if (opt.subcategories && opt.subcategories.length > 0) {
-        option.children = opt.subcategories.map(sub => ({
-          value: sub.name,
-          label: sub.name,
-        }))
-      }
-      return option
-    })
 })
 
 // 视图模式滑动指示器位置
@@ -160,26 +130,16 @@ function handleSubcategoryChange(value) {
   trackFilter('subcategory', value)
 }
 
-// PC 端级联选择器变化处理
-function handleCascaderChange(value) {
-  if (!value || value.length === 0) {
-    // 清空选择 -> 重置为全部
-    emit('update:categoryFilter', 'all')
-    emit('update:subcategoryFilter', 'all')
-    trackFilter('category', 'all')
-  }
-  else if (value.length === 1) {
-    // 只选了一级分类
-    emit('update:categoryFilter', value[0])
-    emit('update:subcategoryFilter', 'all')
-    trackFilter('category', value[0])
-  }
-  else {
-    // 选了一级和二级分类
-    emit('update:categoryFilter', value[0])
-    emit('update:subcategoryFilter', value[1])
-    trackFilter('category', value[0])
-    trackFilter('subcategory', value[1])
+// 分类变化处理（来自 CategoryDropdown）
+function handleCategoryUpdate(value) {
+  emit('update:categoryFilter', value)
+  trackFilter('category', value)
+}
+
+function handleSubcategoryUpdate(value) {
+  emit('update:subcategoryFilter', value)
+  if (value !== 'all') {
+    trackFilter('subcategory', value)
   }
 }
 
@@ -312,19 +272,15 @@ function resetFilters() {
 
       <div class="filter-divider" />
 
-      <!-- Category Filter (级联选择器) -->
+      <!-- Category Filter (自定义下拉) -->
       <div class="filter-item">
         <span class="filter-label">分类</span>
-        <el-cascader
-          :model-value="cascaderValue"
-          :options="cascaderOptions"
-          :props="{ expandTrigger: 'hover', checkStrictly: true }"
-          placeholder="全部分类"
-          clearable
-          size="default"
-          popper-class="category-cascader-popper"
-          style="width: 180px"
-          @change="handleCascaderChange"
+        <CategoryDropdown
+          :category-options="categoryOptions"
+          :category-filter="categoryFilter"
+          :subcategory-filter="subcategoryFilter"
+          @update:category-filter="handleCategoryUpdate"
+          @update:subcategory-filter="handleSubcategoryUpdate"
         />
       </div>
 
@@ -335,7 +291,7 @@ function resetFilters() {
           :model-value="formatFilter"
           placeholder="全部格式"
           size="default"
-          style="width: 120px"
+          style="width: 140px"
           @change="handleFormatChange"
         >
           <el-option
@@ -354,7 +310,7 @@ function resetFilters() {
           :model-value="sortBy"
           placeholder="排序方式"
           size="default"
-          style="width: 130px"
+          style="width: 160px"
           @change="handleSortChange"
         >
           <el-option

@@ -34,6 +34,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // 热门数据（从父组件传入，避免重复请求）
+  popularityData: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['select', 'resetFilters'])
@@ -45,6 +50,32 @@ const router = useRouter()
 const { currentSeries, currentSeriesConfig, availableSeriesOptions } = useWallpaperType()
 const { viewMode, setViewMode } = useViewMode()
 const { isMobile } = useDevice()
+
+// 从 props.popularityData 获取热门排名、下载次数和访问量
+function getPopularRank(filename) {
+  if (!props.popularityData || props.popularityData.length === 0) {
+    return 0
+  }
+  const index = props.popularityData.findIndex(item => item.filename === filename)
+  return index !== -1 ? index + 1 : 0
+}
+
+function getDownloadCount(filename) {
+  if (!props.popularityData || props.popularityData.length === 0) {
+    return 0
+  }
+  const item = props.popularityData.find(item => item.filename === filename)
+  return item?.download_count || 0
+}
+
+function getViewCount(filename) {
+  if (!props.popularityData || props.popularityData.length === 0) {
+    return 0
+  }
+  const item = props.popularityData.find(item => item.filename === filename)
+  return item?.view_count || 0
+}
+
 const gridRef = ref(null)
 const wrapperRef = ref(null)
 const isAnimating = ref(false)
@@ -78,7 +109,6 @@ const timers = new Set()
 // ========================================
 // 移动端 Flex 瀑布流分列相关
 // ========================================
-const mobileMasonryRef = ref(null)
 const leftColumnRef = ref(null)
 const rightColumnRef = ref(null)
 const leftColumnItems = ref([])
@@ -446,27 +476,31 @@ function animateCardsIn() {
   nextTick(() => {
     const cards = gridRef.value?.querySelectorAll('.wallpaper-card')
     if (cards && cards.length > 0) {
-      // 统一使用向上弹出的入场动画
-      gsap.fromTo(
-        cards,
-        {
-          opacity: 0,
-          y: 20,
-          scale: 0.98,
+      // 先设置初始状态
+      gsap.set(cards, {
+        opacity: 0,
+        y: 15,
+      })
+
+      // 执行动画，不使用 clearProps 避免布局抖动
+      gsap.to(cards, {
+        opacity: 1,
+        y: 0,
+        duration: 0.3,
+        stagger: {
+          amount: 0.2,
+          from: 'start',
         },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.35,
-          stagger: {
-            amount: 0.25,
-            from: 'start',
-          },
-          ease: 'power2.out',
-          onComplete: warmupFlip,
+        ease: 'power2.out',
+        onComplete: () => {
+          // 动画完成后手动清除 transform 和 opacity，避免 clearProps: 'all' 导致的抖动
+          cards.forEach((card) => {
+            card.style.transform = ''
+            card.style.opacity = ''
+          })
+          warmupFlip()
         },
-      )
+      })
     }
   })
 }
@@ -501,7 +535,16 @@ onUnmounted(() => {
 })
 
 // 监听 wallpapers 变化（筛选/搜索/分类切换时）
+// 使用标记防止重复动画
+let animationPending = false
+
 watch(() => props.wallpapers, async (newVal, oldVal) => {
+  // 防止重复触发
+  if (animationPending) {
+    return
+  }
+  animationPending = true
+
   // 重置显示数量
   displayCount.value = PAGE_SIZE
 
@@ -525,6 +568,13 @@ watch(() => props.wallpapers, async (newVal, oldVal) => {
     else {
       warmupFlip()
     }
+    animationPending = false
+    return
+  }
+
+  // 数据相同，不触发动画
+  if (newVal === oldVal || (newVal?.length === oldVal?.length && newVal?.[0]?.id === oldVal?.[0]?.id)) {
+    animationPending = false
     return
   }
 
@@ -536,6 +586,7 @@ watch(() => props.wallpapers, async (newVal, oldVal) => {
     showGrid.value = true
     nextTick(() => {
       animateCardsIn()
+      animationPending = false
     })
   }, 100)
   timers.add(timer)
@@ -677,7 +728,6 @@ const skeletonCount = computed(() => isMobile.value ? 6 : 12)
       <!-- 移动端 Flex 瀑布流布局 -->
       <div
         v-if="useMobileMasonry"
-        ref="mobileMasonryRef"
         class="mobile-masonry"
         :class="{ 'is-hidden': !showGrid }"
         @touchstart="handleTouchStart"
@@ -693,6 +743,9 @@ const skeletonCount = computed(() => isMobile.value ? 6 : 12)
             :search-query="searchQuery"
             view-mode="masonry"
             :aspect-ratio="currentSeriesConfig?.aspectRatio || '16/10'"
+            :popular-rank="getPopularRank(wallpaper.filename)"
+            :download-count="getDownloadCount(wallpaper.filename)"
+            :view-count="getViewCount(wallpaper.filename)"
             @click="handleSelect"
             @image-load="handleImageLoad('left', index)"
           />
@@ -706,6 +759,9 @@ const skeletonCount = computed(() => isMobile.value ? 6 : 12)
             :search-query="searchQuery"
             view-mode="masonry"
             :aspect-ratio="currentSeriesConfig?.aspectRatio || '16/10'"
+            :popular-rank="getPopularRank(wallpaper.filename)"
+            :download-count="getDownloadCount(wallpaper.filename)"
+            :view-count="getViewCount(wallpaper.filename)"
             @click="handleSelect"
             @image-load="handleImageLoad('right', index)"
           />
@@ -730,6 +786,9 @@ const skeletonCount = computed(() => isMobile.value ? 6 : 12)
           :search-query="searchQuery"
           :view-mode="effectiveViewMode"
           :aspect-ratio="currentSeriesConfig?.aspectRatio || '16/10'"
+          :popular-rank="getPopularRank(wallpaper.filename)"
+          :download-count="getDownloadCount(wallpaper.filename)"
+          :view-count="getViewCount(wallpaper.filename)"
           @click="handleSelect"
         />
       </div>
@@ -906,6 +965,8 @@ const skeletonCount = computed(() => isMobile.value ? 6 : 12)
   grid-template-columns: repeat(1, 1fr);
   gap: var(--grid-gap);
   transition: opacity 0.15s ease;
+  // 防止动画后的布局重排影响
+  contain: layout style;
 
   // 移动端更紧凑的间距
   @include mobile-only {
@@ -971,6 +1032,8 @@ const skeletonCount = computed(() => isMobile.value ? 6 : 12)
     > * {
       break-inside: avoid;
       margin-bottom: calc(var(--grid-gap) * 1.2);
+      // 确保动画后位置稳定
+      backface-visibility: hidden;
 
       // 移动端更紧凑的间距
       @include mobile-only {

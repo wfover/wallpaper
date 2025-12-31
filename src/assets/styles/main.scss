@@ -530,3 +530,22 @@ body.fullscreen-mode {
     display: none !important;
   }
 }
+
+// ========================================
+// Element Plus Select 下拉菜单全局样式
+// ========================================
+.el-select-dropdown__item.is-selected {
+  color: var(--color-accent) !important;
+  font-weight: bold;
+}
+
+.el-select-dropdown__item:hover,
+.el-select-dropdown__item.hover {
+  background-color: var(--color-accent-light) !important;
+  background-color: rgba(99, 102, 241, 0.1) !important;
+}
+
+// 聚焦时边框颜色
+.el-select .el-input.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 1px var(--color-accent) inset !important;
+}

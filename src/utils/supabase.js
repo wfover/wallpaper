@@ -138,3 +138,123 @@ export async function getPopularWallpapers(series = 'desktop', limit = 20) {
     return []
   }
 }
+
+/**
+ * 获取单个壁纸的下载次数
+ * @param {string} filename - 文件名
+ * @param {string} series - 系列
+ * @returns {Promise<number>} 下载次数
+ */
+export async function getWallpaperDownloadCount(filename, series) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return 0
+  }
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/download_stats?filename=eq.${encodeURIComponent(filename)}&series=eq.${series}&select=download_count`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data.length > 0 ? data[0].download_count : 0
+  }
+  catch (error) {
+    console.error('获取下载次数失败:', error)
+    return 0
+  }
+}
+
+/**
+ * 获取单个壁纸的访问量
+ * @param {string} filename - 文件名
+ * @param {string} series - 系列
+ * @returns {Promise<number>} 访问量
+ */
+export async function getWallpaperViewCount(filename, series) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return 0
+  }
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/view_stats?filename=eq.${encodeURIComponent(filename)}&series=eq.${series}&select=view_count`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data.length > 0 ? data[0].view_count : 0
+  }
+  catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn('获取访问量失败:', error)
+    }
+    return 0
+  }
+}
+
+/**
+ * 获取指定时间范围内的热门壁纸
+ * @param {string} series - 系列
+ * @param {number} days - 天数 (7 或 30)
+ * @param {number} limit - 返回数量
+ * @returns {Promise<Array>} 热门壁纸数组
+ */
+export async function getPopularByTimeRange(series, days, limit = 100) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return []
+  }
+
+  // 根据天数选择对应的视图
+  const viewName = days <= 7 ? 'popular_wallpapers_weekly' : 'popular_wallpapers_monthly'
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/${viewName}?series=eq.${series}&limit=${limit}`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    return await response.json()
+  }
+  catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn(`获取${days}天热门壁纸失败:`, error)
+    }
+    return []
+  }
+}
+
+/**
+ * 检查 Supabase 是否已配置
+ * @returns {boolean}
+ */
+export function isSupabaseConfigured() {
+  return !!(SUPABASE_URL && SUPABASE_ANON_KEY)
+}

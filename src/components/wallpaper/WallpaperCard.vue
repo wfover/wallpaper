@@ -3,7 +3,7 @@ import { gsap } from 'gsap'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useDevice } from '@/composables/useDevice'
 import { IMAGE_PROXY } from '@/utils/constants'
-import { formatFileSize, getDisplayFilename, highlightText } from '@/utils/format'
+import { formatFileSize, formatNumber, formatRelativeTime, getDisplayFilename, highlightText } from '@/utils/format'
 
 const props = defineProps({
   wallpaper: {
@@ -25,6 +25,21 @@ const props = defineProps({
   aspectRatio: {
     type: String,
     default: '16/10',
+  },
+  // 热门排名（0表示不是热门）
+  popularRank: {
+    type: Number,
+    default: 0,
+  },
+  // 下载次数
+  downloadCount: {
+    type: Number,
+    default: 0,
+  },
+  // 访问量
+  viewCount: {
+    type: Number,
+    default: 0,
   },
 })
 
@@ -79,6 +94,9 @@ const fileFormat = computed(() => {
   const ext = props.wallpaper.filename.split('.').pop()?.toUpperCase() || ''
   return ext
 })
+
+// 相对时间（如"3天前"）
+const relativeTime = computed(() => formatRelativeTime(props.wallpaper.createdAt))
 
 // 显示用的文件名（去除分类前缀）
 const displayFilename = computed(() => getDisplayFilename(props.wallpaper.filename))
@@ -212,6 +230,14 @@ function handleMouseLeave(e) {
   >
     <!-- Image Container -->
     <div class="card-image" :style="viewMode === 'list' ? listImageStyle : cardImageStyle">
+      <!-- 热门标签 -->
+      <div v-if="popularRank > 0 && popularRank <= 10" class="hot-badge" :class="{ 'hot-badge--top3': popularRank <= 3 }">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+        </svg>
+        <span>🔥 热门</span>
+      </div>
+
       <!-- Skeleton 骨架屏 -->
       <div v-if="!imageLoaded" class="image-skeleton">
         <div class="skeleton-shimmer" />
@@ -256,22 +282,36 @@ function handleMouseLeave(e) {
 
     <!-- Card Info -->
     <div class="card-info">
+      <!-- 第一行：文件名 -->
       <p class="card-filename" :title="displayFilename">
         <template v-for="(part, idx) in highlightedFilename" :key="idx">
           <span v-if="part.highlight" class="highlight">{{ part.text }}</span>
           <span v-else>{{ part.text }}</span>
         </template>
       </p>
+      <!-- 第二行：文件大小、访问量、下载量 -->
       <div class="card-meta">
-        <span class="meta-item">
+        <span class="meta-item">{{ formattedSize }}</span>
+        <!-- 访问量 -->
+        <span v-if="viewCount > 0" class="meta-item meta-views">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
           </svg>
-          {{ formattedSize }}
+          {{ formatNumber(viewCount) }}
         </span>
-        <span class="meta-item meta-format">
-          {{ fileFormat }}
+        <!-- 下载次数 -->
+        <span v-if="downloadCount > 0" class="meta-item meta-downloads">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+          </svg>
+          {{ formatNumber(downloadCount) }}
         </span>
+      </div>
+      <!-- 第三行：上传时间、格式标签 -->
+      <div class="card-meta-secondary">
+        <span class="meta-item meta-time">{{ relativeTime }}</span>
+        <span class="meta-item meta-format">{{ fileFormat }}</span>
       </div>
     </div>
   </div>
@@ -285,7 +325,8 @@ function handleMouseLeave(e) {
   overflow: hidden;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  will-change: transform, box-shadow;
+  // 使用 backface-visibility 创建新的合成层，避免动画后的布局抖动
+  backface-visibility: hidden;
   // 添加过渡效果，让圆角变化更平滑
   transition: border-radius 0.4s ease;
 
@@ -326,6 +367,36 @@ function handleMouseLeave(e) {
     img {
       height: auto;
     }
+  }
+}
+
+// 热门标签
+.hot-badge {
+  position: absolute;
+  top: $spacing-xs;
+  left: $spacing-xs;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  color: white;
+  font-size: 10px;
+  font-weight: $font-weight-bold;
+  border-radius: $radius-full;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+
+  svg {
+    width: 12px;
+    height: 12px;
+    display: none;
+  }
+
+  // Top 3 特殊样式
+  &--top3 {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
   }
 }
 
@@ -446,7 +517,17 @@ function handleMouseLeave(e) {
 .card-meta {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  font-size: $font-size-xs;
+  color: var(--color-text-muted);
+  margin-bottom: $spacing-xs;
+}
+
+.card-meta-secondary {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
   font-size: $font-size-xs;
   color: var(--color-text-muted);
 }
@@ -454,12 +535,12 @@ function handleMouseLeave(e) {
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  white-space: nowrap;
+}
 
-  svg {
-    width: 12px;
-    height: 12px;
-  }
+.meta-time {
+  color: var(--color-text-muted);
 }
 
 .meta-format {
@@ -468,6 +549,24 @@ function handleMouseLeave(e) {
   border-radius: $radius-sm;
   font-weight: $font-weight-medium;
   font-size: 10px;
+}
+
+.meta-views {
+  color: var(--color-text-muted);
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.meta-downloads {
+  color: var(--color-text-muted);
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
 }
 
 // 列表视图模式

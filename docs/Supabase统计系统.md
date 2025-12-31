@@ -48,7 +48,7 @@ CREATE TABLE wallpaper_downloads (
   filename TEXT NOT NULL,
   series TEXT NOT NULL,
   category TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX idx_downloads_filename ON wallpaper_downloads(filename);
@@ -63,13 +63,15 @@ CREATE TABLE wallpaper_views (
   filename TEXT NOT NULL,
   series TEXT NOT NULL,
   category TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX idx_views_filename ON wallpaper_views(filename);
 CREATE INDEX idx_views_series ON wallpaper_views(series);
 CREATE INDEX idx_views_created_at ON wallpaper_views(created_at);
 ```
+
+> **注意：** `created_at` 使用 `TIMESTAMP(0) WITHOUT TIME ZONE` 类型，精确到秒，不含时区信息。
 
 ### 3. wallpaper_stats_summary（汇总表）
 
@@ -127,6 +129,62 @@ ORDER BY popularity_score DESC;
 ```
 
 **热门算法：** `popularity_score = download_count × 3 + view_count`
+
+### popular_wallpapers_weekly（本周热门壁纸）
+
+```sql
+CREATE VIEW popular_wallpapers_weekly AS
+SELECT
+  COALESCE(d.filename, v.filename) as filename,
+  COALESCE(d.series, v.series) as series,
+  COALESCE(d.category, v.category) as category,
+  COALESCE(d.download_count, 0) as download_count,
+  COALESCE(v.view_count, 0) as view_count,
+  (COALESCE(d.download_count, 0) * 3 + COALESCE(v.view_count, 0)) as popularity_score
+FROM (
+  SELECT filename, series, category, COUNT(*) as download_count
+  FROM wallpaper_downloads
+  WHERE created_at >= NOW() - INTERVAL '7 days'
+  GROUP BY filename, series, category
+) d
+FULL OUTER JOIN (
+  SELECT filename, series, category, COUNT(*) as view_count
+  FROM wallpaper_views
+  WHERE created_at >= NOW() - INTERVAL '7 days'
+  GROUP BY filename, series, category
+) v ON d.filename = v.filename AND d.series = v.series
+ORDER BY popularity_score DESC;
+```
+
+**说明：** 只统计最近 7 天的下载和访问数据，用于"本周热门"排序功能。
+
+### popular_wallpapers_monthly（本月热门壁纸）
+
+```sql
+CREATE VIEW popular_wallpapers_monthly AS
+SELECT
+  COALESCE(d.filename, v.filename) as filename,
+  COALESCE(d.series, v.series) as series,
+  COALESCE(d.category, v.category) as category,
+  COALESCE(d.download_count, 0) as download_count,
+  COALESCE(v.view_count, 0) as view_count,
+  (COALESCE(d.download_count, 0) * 3 + COALESCE(v.view_count, 0)) as popularity_score
+FROM (
+  SELECT filename, series, category, COUNT(*) as download_count
+  FROM wallpaper_downloads
+  WHERE created_at >= NOW() - INTERVAL '30 days'
+  GROUP BY filename, series, category
+) d
+FULL OUTER JOIN (
+  SELECT filename, series, category, COUNT(*) as view_count
+  FROM wallpaper_views
+  WHERE created_at >= NOW() - INTERVAL '30 days'
+  GROUP BY filename, series, category
+) v ON d.filename = v.filename AND d.series = v.series
+ORDER BY popularity_score DESC;
+```
+
+**说明：** 只统计最近 30 天的下载和访问数据，用于"本月热门"排序功能。
 
 ---
 
@@ -254,6 +312,20 @@ curl "https://你的项目.supabase.co/rest/v1/popular_wallpapers?series=eq.desk
   -H "apikey: 你的ANON_KEY"
 ```
 
+### 获取本周热门壁纸
+
+```bash
+curl "https://你的项目.supabase.co/rest/v1/popular_wallpapers_weekly?series=eq.desktop&limit=20" \
+  -H "apikey: 你的ANON_KEY"
+```
+
+### 获取本月热门壁纸
+
+```bash
+curl "https://你的项目.supabase.co/rest/v1/popular_wallpapers_monthly?series=eq.desktop&limit=20" \
+  -H "apikey: 你的ANON_KEY"
+```
+
 ---
 
 ## 后续功能规划
@@ -261,7 +333,7 @@ curl "https://你的项目.supabase.co/rest/v1/popular_wallpapers?series=eq.desk
 | 功能            | 说明                         | 实现方式                                         | 难度 |
 | --------------- | ---------------------------- | ------------------------------------------------ | ---- |
 | 🔥 热门壁纸区块 | 首页展示热门壁纸 Top 10      | 调用 `popular_wallpapers` 视图                   | 简单 |
-| 📊 下载次数显示 | 详情弹窗显示"已下载 xxx 次"  | 查询 `download_stats` 视图                       | 简单 |
+| 📊 下载次数显示 | 详情弹窗显示"已下载 xxx 次"  | 查询 `download_stats` 视图                       | 简单 |是·
 | 🏷️ 热门标签     | 壁纸卡片角标显示"热门"       | 根据 `popularity_score` 阈值判断                 | 简单 |
 | 📈 本周/月热门  | 只统计最近 7/30 天数据       | 新建带时间筛选的视图                             | 中等 |
 | 🔀 热度排序     | 筛选面板添加"按热度排序"选项 | 前端调用 API 获取排序数据                        | 中等 |
