@@ -64,6 +64,28 @@ jobs:
         with:
           repository: IT-NuanxinPro/nuanXinProPic
           path: nuanXinProPic
+          fetch-depth: 0  # 获取完整历史，用于恢复时间戳
+
+      - name: Restore file timestamps from backup
+        run: |
+          cd nuanXinProPic
+
+          # 检查是否存在时间戳备份文件
+          if [ -f "timestamps-backup.txt" ]; then
+            echo "✅ Found timestamps-backup.txt, restoring file timestamps..."
+
+            # 使用备份文件恢复时间戳
+            chmod +x scripts/restore-timestamps.sh
+            ./scripts/restore-timestamps.sh
+
+            echo "✅ File timestamps restored from backup"
+          else
+            echo "⚠️ No timestamps-backup.txt found, skipping timestamp restoration"
+          fi
+
+          # 验证：显示几个文件的时间
+          echo "📅 Sample file timestamps:"
+          ls -lh wallpaper/desktop/动漫/二次元/ 2>/dev/null | head -5 || echo "Directory not found"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
