@@ -383,6 +383,9 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
       return
     }
 
+    // 立即清空旧数据，避免切换系列时显示旧图片
+    wallpapers.value = []
+    
     loading.value = true
     error.value = null
     errorType.value = null

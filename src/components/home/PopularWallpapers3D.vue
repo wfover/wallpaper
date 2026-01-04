@@ -343,6 +343,17 @@ function destroyStarfield() {
   }
 }
 
+// 监听 series 变化，立即清空状态（避免显示旧图片）
+watch(() => props.series, (newSeries, oldSeries) => {
+  if (newSeries !== oldSeries && oldSeries) {
+    // 系列切换时，立即清空所有状态
+    imageLoaded.value = {}
+    currentIndex.value = 0
+    stopAutoPlay()
+    destroyStarfield()
+  }
+})
+
 watch(carouselList, (newList) => {
   if (newList.length > 0) {
     // 重置状态
@@ -374,7 +385,7 @@ onUnmounted(() => {
 
 <template>
   <!-- 骨架屏：数据加载中 -->
-  <div v-if="carouselList.length === 0" class="carousel-3d carousel-3d--loading">
+  <div v-if="loading || carouselList.length === 0" class="carousel-3d carousel-3d--loading">
     <div class="carousel-3d__header">
       <div class="skeleton-badge">
         <span class="skeleton-badge__text">🔥 热门壁纸</span>

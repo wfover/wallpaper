@@ -95,8 +95,8 @@ onUnmounted(() => {
   top: 0; // 和状态栏平齐
   left: 50%;
   transform: translateX(-50%);
-  width: 110px;
-  height: 35px;
+  width: 140px; // 增加宽度：110px -> 140px
+  height: 28px; // 降低高度：35px -> 28px
   background: #000;
   border-radius: 30px;
   z-index: 10;
@@ -109,11 +109,11 @@ onUnmounted(() => {
   top: 12%; // 靠上显示
   left: 50%;
   transform: translateX(-50%); // 只水平居中
-  font-size: 100px; // 特别大的字体
+  font-size: 130px; // 增大字体：100px -> 130px
   font-weight: 600; // 加粗
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
-  letter-spacing: -2px;
+  letter-spacing: 8px; // 增加数字间隔：-2px -> 8px
   white-space: nowrap;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); // 添加阴影增强可读性
   z-index: 5;
@@ -171,15 +171,15 @@ onUnmounted(() => {
 
   .phone-frame__dynamic-island {
     top: 0;
-    width: 110px;
-    height: 32px;
+    width: 120px; // 增加宽度：110px -> 120px
+    height: 26px; // 降低高度：32px -> 26px
     border-radius: 16px;
     margin-top: 6px;
   }
 
   .phone-frame__wallpaper-time {
-    font-size: 60px; // 移动端稍小一些
-    letter-spacing: -1.5px;
+    font-size: 80px; // 增大字体：60px -> 80px
+    letter-spacing: 6px; // 增加数字间隔：-1.5px -> 6px
   }
 
   .phone-frame__home-indicator {
