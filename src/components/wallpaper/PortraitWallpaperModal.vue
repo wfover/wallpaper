@@ -34,8 +34,8 @@ const { currentSeries } = useWallpaperType()
 // 设备检测
 const { isMobile } = useDevice()
 
-// 是否支持真机显示（手机壁纸和头像系列）
-const canUseDeviceMode = computed(() => ['mobile', 'avatar'].includes(currentSeries.value))
+// 是否支持真机显示（仅手机壁纸系列，头像是正方形不适合真机显示）
+const canUseDeviceMode = computed(() => currentSeries.value === 'mobile')
 
 // 是否为头像系列（正方形图片，需要特殊布局）
 const isAvatarSeries = computed(() => currentSeries.value === 'avatar')
@@ -310,7 +310,11 @@ async function toggleDeviceMode() {
   else {
     // 进入真机模式：添加进入动画
     isDeviceMode.value = true
-    document.body.classList.add('device-mode')
+    // 只在手机端添加 device-mode 类（会隐藏页面其他元素）
+    // 电脑端不添加，因为弹窗本身就是覆盖层
+    if (isMobile.value) {
+      document.body.classList.add('device-mode')
+    }
     showControls.value = true
     document.body.classList.add('show-controls')
 
@@ -1180,9 +1184,9 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-sm;
-  font-size: 13px; // PC端增加到 15px，更清晰
-  color: var(--color-text-primary); // 改为 primary，对比度更高
-  font-weight: 500; // 增加字重，更醒目
+  font-size: 13px;
+  color: var(--color-text-muted); // 使用 muted 颜色，更柔和
+  font-weight: 400; // 降低字重，更低调
 
   @include mobile-only {
     gap: $spacing-xs;

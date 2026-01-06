@@ -23,6 +23,7 @@ const currentIndex = ref(0)
 const isAnimating = ref(false)
 const isHovering = ref(false)
 const imageLoaded = ref({})
+const isEntranceReady = ref(false) // 入场动画就绪状态
 
 // 鼠标位置追踪（科技感光效）
 const mousePos = ref({ x: 0, y: 0 })
@@ -78,6 +79,15 @@ function getCardStyle(index) {
   const total = extendedList.value.length
   if (total === 0)
     return {}
+
+  // 入场动画未就绪时，所有卡片在中心位置
+  if (!isEntranceReady.value) {
+    return {
+      transform: 'translateX(0) translateZ(0) rotateY(0deg) scale(0.3)',
+      opacity: 0,
+      zIndex: 50,
+    }
+  }
 
   let relativePos = index - currentIndex.value
   if (relativePos > total / 2)
@@ -349,6 +359,7 @@ watch(() => props.series, (newSeries, oldSeries) => {
     // 系列切换时，立即清空所有状态
     imageLoaded.value = {}
     currentIndex.value = 0
+    isEntranceReady.value = false
     stopAutoPlay()
     destroyStarfield()
   }
@@ -359,11 +370,19 @@ watch(carouselList, (newList) => {
     // 重置状态
     imageLoaded.value = {}
     currentIndex.value = 0
+    isEntranceReady.value = false
 
     // 初始化星空和自动播放
     nextTick(() => {
       initStarfield()
-      startAutoPlay()
+      // 延迟触发入场动画，让卡片从中心展开
+      setTimeout(() => {
+        isEntranceReady.value = true
+        // 入场动画完成后再启动自动播放
+        setTimeout(() => {
+          startAutoPlay()
+        }, 600)
+      }, 100)
     })
   }
 }, { immediate: true })
@@ -645,13 +664,21 @@ onUnmounted(() => {
   width: 520px;
   transform-style: preserve-3d;
   transition:
-    transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity 0.55s ease;
+    transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.5s ease;
   will-change: transform, opacity;
   cursor: pointer;
 
+  // 入场动画：依次延迟展开
+  @for $i from 0 through 6 {
+    &:nth-child(#{$i + 1}) {
+      transition-delay: #{$i * 0.06}s;
+    }
+  }
+
   &.is-animating {
     transition-duration: 0.4s;
+    transition-delay: 0s !important;
     transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
