@@ -60,7 +60,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:sortBy', 'update:formatFilter', 'update:categoryFilter', 'update:subcategoryFilter', 'reset'])
 
-const { isMobile } = useDevice()
+const { isMobileOrTablet } = useDevice()
 const { viewMode, setViewMode } = useViewMode()
 
 // 移动端弹窗状态
@@ -88,9 +88,9 @@ const viewModeSliderPosition = computed(() => {
   }
 })
 
-// 移动端视图模式滑动指示器位置（只有瀑布流和列表两个选项）
+// 移动端视图模式滑动指示器位置（网格和列表两个选项）
 const mobileViewModeSliderPosition = computed(() => {
-  return viewMode.value === 'list' ? 'is-list' : 'is-masonry'
+  return viewMode.value === 'list' ? 'is-list' : 'is-grid'
 })
 
 // 激活的筛选数量（不含分类，分类单独显示）
@@ -226,7 +226,7 @@ function resetFilters() {
       <!-- PC 端重置按钮 -->
       <Transition name="fade">
         <button
-          v-if="hasActiveFilters && !isMobile"
+          v-if="hasActiveFilters && !isMobileOrTablet"
           class="reset-btn"
           @click="handleReset"
         >
@@ -240,7 +240,7 @@ function resetFilters() {
     </div>
 
     <!-- PC 端筛选项 -->
-    <div v-if="!isMobile" class="filter-right">
+    <div v-if="!isMobileOrTablet" class="filter-right">
       <!-- View Mode Toggle -->
       <div class="view-mode-toggle">
         <!-- 滑动指示器 -->
@@ -347,20 +347,21 @@ function resetFilters() {
 
     <!-- 移动端视图切换 + 分类按钮 + 筛选按钮 -->
     <div v-else class="filter-right-mobile">
-      <!-- 视图模式切换 -->
+      <!-- 视图模式切换（网格/列表） -->
       <div class="view-mode-toggle-mobile">
         <div class="view-mode-slider-mobile" :class="mobileViewModeSliderPosition" />
         <button
           class="view-mode-btn-mobile"
-          :class="{ 'is-active': viewMode === 'masonry' || viewMode === 'grid' }"
-          aria-label="瀑布流视图"
-          @click="setViewMode('masonry')"
+          :class="{ 'is-active': viewMode === 'grid' || viewMode === 'masonry' }"
+          aria-label="网格视图"
+          @click="setViewMode('grid')"
         >
+          <!-- 网格图标 -->
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="10" />
-            <rect x="14" y="3" width="7" height="6" />
-            <rect x="3" y="16" width="7" height="5" />
-            <rect x="14" y="12" width="7" height="9" />
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
           </svg>
         </button>
         <button
@@ -742,8 +743,8 @@ function resetFilters() {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 0;
 
-  // 移动端只有两个位置：瀑布流（默认）和列表
-  &.is-masonry {
+  // 移动端只有两个位置：网格（默认）和列表
+  &.is-grid {
     transform: translateX(0);
   }
 

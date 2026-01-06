@@ -336,10 +336,10 @@ function animateDeviceModeIn() {
   if (!phoneFrameRef.value)
     return
 
-  // PhoneFrame 是组件，需要访问其根元素
-  const phoneFrameWrapper = phoneFrameRef.value.$el?.closest('.phone-frame-wrapper')
-  const phoneFrame = phoneFrameRef.value.$el
-  if (!phoneFrameWrapper || !phoneFrame)
+  // phoneFrameRef 现在指向 div.phone-frame-overlay
+  const phoneFrameOverlay = phoneFrameRef.value
+  const phoneFrame = phoneFrameOverlay.querySelector('.phone-frame')
+  if (!phoneFrame)
     return
 
   // 启用硬件加速，优化性能
@@ -534,54 +534,51 @@ onUnmounted(() => {
           :class="{ 'is-device-mode': isDeviceMode, 'is-avatar-container': isAvatarSeries }"
           @click="toggleControls"
         >
-          <!-- 真机显示模式：显示手机框架（统一用于电脑端和手机端） -->
-          <PhoneFrame
+          <!-- Loading -->
+          <div v-if="!imageLoaded" class="modal-loading">
+            <LoadingSpinner size="lg" />
+          </div>
+
+          <!-- Error -->
+          <div v-if="imageError" class="modal-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+            <p>图片加载失败</p>
+          </div>
+
+          <!-- 图片（始终存在，不受模式影响） -->
+          <img
+            v-show="imageLoaded && !imageError"
+            :src="wallpaper.url"
+            :alt="wallpaper.filename"
+            class="portrait-image"
+            :class="{
+              'portrait-image--loaded': imageLoaded && !imageError,
+              'portrait-image--avatar': isAvatarSeries,
+              'portrait-image--in-device-mode': isDeviceMode && canUseDeviceMode,
+            }"
+            @load="handleImageLoad"
+            @error="handleImageError"
+          >
+
+          <!-- 真机显示模式：手机框架装饰层（覆盖在图片上） -->
+          <div
             v-if="isDeviceMode && canUseDeviceMode && imageLoaded && !imageError"
             ref="phoneFrameRef"
-            class="phone-frame-wrapper"
-            :class="{ 'phone-frame-wrapper--device-mode': isMobile }"
+            class="phone-frame-overlay"
+            :class="{ 'phone-frame-overlay--mobile': isMobile }"
           >
-            <img
-              :src="wallpaper.url"
-              :alt="wallpaper.filename"
-              class="portrait-image portrait-image--in-frame"
-              :class="{ 'portrait-image--avatar': currentSeries === 'avatar' }"
-              @load="handleImageLoad"
-              @error="handleImageError"
-            >
-          </PhoneFrame>
-
-          <!-- 非真机模式：直接显示图片 -->
-          <template v-else>
-            <!-- Loading -->
-            <div v-if="!imageLoaded" class="modal-loading">
-              <LoadingSpinner size="lg" />
-            </div>
-
-            <!-- Error -->
-            <div v-else-if="imageError" class="modal-error">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <path d="M12 8v4M12 16h.01" />
-              </svg>
-              <p>图片加载失败</p>
-            </div>
-
-            <!-- Image -->
-            <img
-              v-show="imageLoaded && !imageError"
-              :src="wallpaper.url"
-              :alt="wallpaper.filename"
-              class="portrait-image"
-              :class="{
-                'portrait-image--device-mode': isDeviceMode,
-                'portrait-image--loaded': imageLoaded && !imageError,
-                'portrait-image--avatar': isAvatarSeries,
-              }"
-              @load="handleImageLoad"
-              @error="handleImageError"
-            >
-          </template>
+            <PhoneFrame>
+              <!-- 框架内的图片副本 -->
+              <img
+                :src="wallpaper.url"
+                :alt="wallpaper.filename"
+                class="portrait-image portrait-image--in-frame"
+              >
+            </PhoneFrame>
+          </div>
         </div>
 
         <!-- Info Panel - 底部信息栏 -->
@@ -650,33 +647,34 @@ onUnmounted(() => {
             </div>
 
             <div class="info-actions">
-              <!-- 真机显示按钮（电脑端和手机端都显示，仅限手机壁纸和头像系列） -->
+              <!-- 真机显示按钮（仅限手机壁纸系列） -->
               <button
                 v-if="canUseDeviceMode"
-                class="device-mode-btn"
+                class="action-btn action-btn--secondary"
                 :class="{ 'is-active': isDeviceMode }"
+                :aria-label="isDeviceMode ? '退出真机显示' : '真机显示'"
                 @click="toggleDeviceMode"
               >
                 <svg v-if="!isDeviceMode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="2" y="3" width="20" height="14" rx="2" />
-                  <path d="M8 21h8M12 17v4" />
+                  <rect x="5" y="2" width="14" height="20" rx="2" />
+                  <path d="M12 18h.01" />
                 </svg>
                 <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
-                <span class="btn-text">{{ isDeviceMode ? '退出真机' : '真机显示' }}</span>
               </button>
 
+              <!-- 下载按钮 -->
               <button
-                class="download-btn"
+                class="action-btn action-btn--primary"
                 :disabled="downloading"
+                aria-label="下载"
                 @click="handleDownload"
               >
                 <LoadingSpinner v-if="downloading" size="sm" />
                 <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
                 </svg>
-                <span class="btn-text">{{ downloading ? '下载中' : '下载' }}</span>
               </button>
             </div>
           </template>
@@ -700,6 +698,11 @@ onUnmounted(() => {
   background: var(--color-bg-modal);
   backdrop-filter: blur(12px);
   padding: $spacing-md;
+  // 添加过渡动画，退出真机模式时平滑恢复
+  transition:
+    background 0.3s ease,
+    backdrop-filter 0.3s ease,
+    padding 0.3s ease;
 
   // 真机显示模式下：全屏白色背景，无 padding，靠上对齐
   &.is-device-mode-overlay {
@@ -722,6 +725,11 @@ onUnmounted(() => {
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: var(--shadow-xl);
+  // 添加过渡动画，退出真机模式时平滑恢复
+  transition:
+    background 0.3s ease,
+    border-radius 0.3s ease,
+    box-shadow 0.3s ease;
 
   @include mobile-only {
     width: 95vw;
@@ -1025,6 +1033,30 @@ onUnmounted(() => {
     left: 0;
     z-index: 2000;
   }
+
+  // 真机模式下隐藏原始图片（框架内有副本）
+  &--in-device-mode {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+// 真机模式手机框架覆盖层
+.phone-frame-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+
+  &--mobile {
+    // 移动端全屏显示
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: #ffffff;
+  }
 }
 
 // 图片加载完成后的样式
@@ -1207,99 +1239,76 @@ onUnmounted(() => {
 .info-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
+  gap: $spacing-md;
   flex-shrink: 0;
 }
 
-.device-mode-btn {
+// 统一的操作按钮样式
+.action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 6px 10px; // 减小按钮大小
-  background: var(--color-bg-hover);
-  color: var(--color-text-primary);
-  font-size: 12px; // 减小字体
-  font-weight: $font-weight-medium;
-  border-radius: var(--radius-md);
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
   transition: all var(--transition-fast);
   flex-shrink: 0;
-  border: 1px solid var(--color-border);
 
-  &:hover {
-    background: var(--color-bg-active);
-    transform: translateY(-1px);
+  svg {
+    width: 24px;
+    height: 24px;
   }
 
-  &.is-active {
+  &:active {
+    transform: scale(0.92);
+  }
+
+  // 主按钮（下载）- 填充样式
+  &--primary {
     background: var(--color-accent);
     color: white;
-    border-color: var(--color-accent);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+
+    &:hover:not(:disabled) {
+      background: var(--color-accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   }
 
-  svg {
-    width: 14px; // 减小图标
-    height: 14px;
-  }
+  // 次按钮（真机显示）- 边框样式
+  &--secondary {
+    background: var(--color-bg-hover);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
 
-  .btn-text {
-    font-size: 12px;
+    &:hover {
+      background: var(--color-bg-active);
+      color: var(--color-text-primary);
+      border-color: var(--color-text-muted);
+    }
+
+    // 激活状态（真机模式开启时）
+    &.is-active {
+      background: var(--color-accent);
+      color: white;
+      border-color: var(--color-accent);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+    }
   }
 
   @include mobile-only {
-    padding: 4px 8px;
-    gap: 3px;
+    width: 44px;
+    height: 44px;
 
     svg {
-      width: 12px;
-      height: 12px;
-    }
-
-    .btn-text {
-      font-size: 11px;
-    }
-  }
-}
-
-.download-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-xs;
-  padding: $spacing-sm $spacing-md;
-  background: var(--color-accent);
-  color: white;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
-
-  &:hover:not(:disabled) {
-    background: var(--color-accent-hover);
-    transform: translateY(-2px);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  @include mobile-only {
-    padding: $spacing-xs $spacing-sm;
-
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    .btn-text {
-      display: none;
+      width: 22px;
+      height: 22px;
     }
   }
 }

@@ -39,6 +39,7 @@
     "javascript-obfuscator": "^5.1.0",
     "lint-staged": "^16.2.7",
     "postcss-pxtorem": "^6.1.0",
+    "rollup-plugin-external-globals": "^0.13.0",
     "sass": "^1.97.0",
     "unplugin-auto-import": "^20.3.0",
     "unplugin-vue-components": "^30.0.0",
