@@ -138,7 +138,7 @@ const bingCopyright = computed(() => {
 // 计算卡片图片样式 - 动态宽高比
 const cardImageStyle = computed(() => {
   if (props.viewMode === 'masonry')
-    return {} // 瀑布流不固定比例
+    return {} // 瀑布流不固定比例，让图片自适应高度
   return { aspectRatio: props.aspectRatio.replace('/', ' / ') }
 })
 
@@ -294,8 +294,8 @@ function handleMouseLeave(e) {
         @error="handleImageError"
       >
 
-      <!-- 分类标签（移动端网格/瀑布流视图显示在图片上） -->
-      <div v-if="categoryDisplay && isMobile && (viewMode === 'grid' || viewMode === 'masonry') && !isBingWallpaper" class="card-category-badge">
+      <!-- 分类标签（移动端网格/瀑布流视图显示在图片上，使用 CSS 控制显示避免 CLS） -->
+      <div v-if="categoryDisplay && (viewMode === 'grid' || viewMode === 'masonry') && !isBingWallpaper" class="card-category-badge">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           <polyline points="9 22 9 12 15 12 15 22" />
@@ -303,8 +303,8 @@ function handleMouseLeave(e) {
         <span>{{ categoryDisplay }}</span>
       </div>
 
-      <!-- Bing 壁纸日期标签（移动端显示在图片上） -->
-      <div v-if="isBingWallpaper && isMobile && (viewMode === 'grid' || viewMode === 'masonry')" class="card-bing-badge">
+      <!-- Bing 壁纸日期标签（移动端显示在图片上，使用 CSS 控制显示避免 CLS） -->
+      <div v-if="isBingWallpaper && (viewMode === 'grid' || viewMode === 'masonry')" class="card-bing-badge">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
           <line x1="16" y1="2" x2="16" y2="6" />
@@ -626,14 +626,14 @@ function handleMouseLeave(e) {
   }
 }
 
-// 移动端图片上的分类标签
+// 移动端图片上的分类标签（使用 CSS 媒体查询控制显示，避免 JS hydration 导致的 CLS）
 .card-category-badge {
   position: absolute;
   bottom: $spacing-xs;
   left: $spacing-xs;
   right: $spacing-xs;
   z-index: 4;
-  display: flex;
+  display: none; // 默认隐藏
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
@@ -644,6 +644,11 @@ function handleMouseLeave(e) {
   font-weight: $font-weight-medium;
   border-radius: $radius-sm;
   max-width: calc(100% - #{$spacing-xs} * 2);
+
+  // 仅移动端显示（使用媒体查询避免 CLS）
+  @include mobile-only {
+    display: flex;
+  }
 
   svg {
     width: 10px;
@@ -778,13 +783,13 @@ function handleMouseLeave(e) {
 // Bing 壁纸专用样式
 // ========================================
 
-// Bing 日期标签（移动端图片上）
+// Bing 日期标签（移动端图片上，使用 CSS 媒体查询控制显示避免 CLS）
 .card-bing-badge {
   position: absolute;
   bottom: $spacing-xs;
   left: $spacing-xs;
   z-index: 4;
-  display: flex;
+  display: none; // 默认隐藏
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
@@ -794,6 +799,11 @@ function handleMouseLeave(e) {
   font-weight: $font-weight-semibold;
   border-radius: $radius-sm;
   box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3);
+
+  // 仅移动端显示（使用媒体查询避免 CLS）
+  @include mobile-only {
+    display: flex;
+  }
 
   svg {
     width: 12px;

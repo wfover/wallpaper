@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import AppFooter from '@/components/layout/AppFooter.vue'
+// import AppFooter from '@/components/layout/AppFooter.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import GridSkeleton from '@/components/wallpaper/GridSkeleton.vue'
 
@@ -43,7 +43,7 @@ onMounted(() => {
       </RouterView>
     </main>
 
-    <AppFooter />
+    <!-- <AppFooter /> -->
   </div>
 </template>
 

@@ -62,6 +62,8 @@ const isDev = import.meta.env.DEV
   padding: $spacing-xl 0;
   background: var(--color-bg-secondary);
   border-top: 1px solid var(--color-border);
+  // 预留最小高度，避免内容加载时的 CLS
+  min-height: 80px;
 }
 
 .footer-container {
