@@ -87,16 +87,22 @@ export function getFallbackUrl(path) {
  * @param {string} series - 系列 ID
  * @param {string} file - 文件名
  * @returns {string} 数据 URL
+ *
+ * 数据源优先级：
+ * 1. R2 模式 (VITE_CDN_BASE + VITE_DATA_SOURCE=r2) → 从 R2 CDN 获取
+ * 2. 本地模式 (VITE_DATA_SOURCE=local) → 从本地 /data/ 获取
+ *
+ * 注意：Fork 用户需要配置自己的 R2 或生成本地 JSON 数据
  */
 export function getDataUrl(series, file = 'index.json') {
   const cacheBuster = `?v=${CDN_VERSION}`
 
-  // 使用自定义 CDN 数据源
+  // R2 数据源（需要同时配置 CDN_BASE 和 DATA_SOURCE=r2）
   if (DATA_SOURCE === 'r2' && CUSTOM_CDN_BASE) {
     return `${CUSTOM_CDN_BASE}/data/${series}/${file}${cacheBuster}`
   }
 
-  // 使用本地数据
+  // 本地数据源（开发环境或 Fork 用户自己生成的数据）
   return `${import.meta.env.BASE_URL}data/${series}/${file}${cacheBuster}`
 }
 
