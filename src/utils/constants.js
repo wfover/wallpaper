@@ -4,15 +4,15 @@
 
 // 从 cdn.js 导入 CDN 相关配置（避免重复定义）
 import {
-  CDN_VERSION,
   CDN_BASE,
-  R2_CDN_BASE,
-  JSDELIVR_CDN_BASE,
+  CDN_VERSION,
   getDataUrl,
+  JSDELIVR_CDN_BASE,
+  R2_CDN_BASE,
 } from '@/utils/cdn'
 
 // 重新导出
-export { CDN_VERSION, R2_CDN_BASE, JSDELIVR_CDN_BASE }
+export { CDN_VERSION, JSDELIVR_CDN_BASE, R2_CDN_BASE }
 
 // 前端应用版本号（构建时由 vite 注入）
 // eslint-disable-next-line no-undef

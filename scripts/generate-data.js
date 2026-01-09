@@ -45,7 +45,8 @@ function loadEnvFile() {
     content.split('\n').forEach((line) => {
       const trimmed = line.trim()
       // 跳过注释和空行
-      if (!trimmed || trimmed.startsWith('#')) return
+      if (!trimmed || trimmed.startsWith('#'))
+        return
       const [key, ...valueParts] = trimmed.split('=')
       const value = valueParts.join('=')
       // 只设置未定义的环境变量（命令行优先）
