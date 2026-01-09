@@ -2,24 +2,49 @@
 // 格式化工具函数
 // ========================================
 
-import { CDN_VERSION, RESOLUTION_THRESHOLDS, SERIES_CONFIG } from '@/utils/constants'
+import { JSDELIVR_CDN_BASE, R2_CDN_BASE, RESOLUTION_THRESHOLDS, SERIES_CONFIG } from '@/utils/constants'
 
-// URL 构建器（运行时动态拼接，防止静态分析提取完整 URL）
-const _urlParts = {
-  p: 'https://',
-  h: 'cdn.jsdelivr.net',
-  g: '/gh/IT-NuanxinPro',
-  r: `/nuanXinProPic@${CDN_VERSION}`,
-}
+// 主 CDN 基础 URL（优先 R2，回退 jsDelivr）
+const CDN_BASE = R2_CDN_BASE || JSDELIVR_CDN_BASE
 
 /**
- * 动态构建图片 URL（防止静态分析）
+ * 动态构建图片 URL（支持 R2 CDN）
  * @param {string} path - 相对路径，如 /wallpaper/desktop/xxx.png
  * @returns {string} 完整 URL
  */
 export function buildImageUrl(path) {
-  const { p, h, g, r } = _urlParts
-  return `${p}${h}${g}${r}${path}`
+  if (!path)
+    return ''
+
+  // 如果路径已经是完整 URL，直接返回
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path
+  }
+
+  // 确保路径以 / 开头
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+
+  return `${CDN_BASE}${normalizedPath}`
+}
+
+/**
+ * 获取 jsDelivr 回退 URL
+ * @param {string} path - 相对路径或完整 URL
+ * @returns {string} jsDelivr URL
+ */
+export function getFallbackUrl(path) {
+  if (!path)
+    return ''
+
+  // 如果路径已经是完整 URL，提取路径部分
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    path = extractPathFromUrl(path)
+  }
+
+  // 确保路径以 / 开头
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+
+  return `${JSDELIVR_CDN_BASE}${normalizedPath}`
 }
 
 /**
@@ -30,11 +55,32 @@ export function buildImageUrl(path) {
 export function extractPathFromUrl(url) {
   if (!url)
     return ''
+
+  // 从 R2 URL 提取
+  if (R2_CDN_BASE && url.startsWith(R2_CDN_BASE)) {
+    return url.slice(R2_CDN_BASE.length)
+  }
+
+  // 从 jsDelivr URL 提取（@version/path 格式）
+  const jsdelivrMatch = url.match(/@[^/]+(\/.*)/)
+  if (jsdelivrMatch) {
+    return jsdelivrMatch[1]
+  }
+
+  // 从 GitHub Raw URL 提取
+  const rawMatch = url.match(/\/nuanXinProPic\/[^/]+(\/.*)/)
+  if (rawMatch) {
+    return rawMatch[1]
+  }
+
+  // 旧的 @main 格式兼容
   const marker = '@main'
   const idx = url.indexOf(marker)
-  if (idx === -1)
-    return url
-  return url.slice(idx + marker.length)
+  if (idx !== -1) {
+    return url.slice(idx + marker.length)
+  }
+
+  return url
 }
 
 /**
@@ -201,7 +247,7 @@ export function getDisplayFilename(filename) {
 }
 
 /**
- * 下载文件（带防护机制）
+ * 下载文件（带防护机制和 CDN 回退）
  * @param {string} url - 文件 URL
  * @param {string} filename - 保存的文件名
  * @param {number} delay - 延迟时间（毫秒），默认 300ms
@@ -213,51 +259,63 @@ export async function downloadFile(url, filename, delay = 300) {
   try {
     // 动态重建 URL（如果是 CDN 链接）
     let finalUrl = url
-    if (url.includes('@main')) {
+    if (url.includes('@main') || url.includes('@v')) {
       const path = extractPathFromUrl(url)
       finalUrl = buildImageUrl(path)
     }
 
     const response = await fetch(finalUrl)
 
-    // 如果 CDN 返回 403 或 404，回退到 GitHub Raw CDN
+    // 如果 CDN 返回 403 或 404，回退到 jsDelivr
     if (!response.ok || response.status === 403 || response.status === 404) {
-      console.warn('[downloadFile] CDN 失败，回退到 GitHub Raw CDN:', response.status)
-      finalUrl = buildRawImageUrl(finalUrl)
+      console.warn('[downloadFile] CDN 失败，回退到 jsDelivr:', response.status)
+      const path = extractPathFromUrl(finalUrl)
+      finalUrl = getFallbackUrl(path)
       const fallbackResponse = await fetch(finalUrl)
 
       if (!fallbackResponse.ok) {
-        throw new Error(`GitHub Raw CDN 失败: ${fallbackResponse.status}`)
+        // jsDelivr 也失败，尝试 GitHub Raw
+        console.warn('[downloadFile] jsDelivr 失败，回退到 GitHub Raw:', fallbackResponse.status)
+        finalUrl = buildRawImageUrl(finalUrl)
+        const rawResponse = await fetch(finalUrl)
+
+        if (!rawResponse.ok) {
+          throw new Error(`所有 CDN 均失败: ${rawResponse.status}`)
+        }
+
+        const blob = await rawResponse.blob()
+        triggerDownload(blob, filename)
+        return
       }
 
       const blob = await fallbackResponse.blob()
-      const blobUrl = URL.createObjectURL(blob)
-
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.download = filename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(blobUrl)
+      triggerDownload(blob, filename)
     }
     else {
       const blob = await response.blob()
-      const blobUrl = URL.createObjectURL(blob)
-
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.download = filename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(blobUrl)
+      triggerDownload(blob, filename)
     }
   }
   catch {
     // 降级方案：直接打开链接
     window.open(url, '_blank')
   }
+}
+
+/**
+ * 触发浏览器下载
+ * @param {Blob} blob - 文件 Blob
+ * @param {string} filename - 文件名
+ */
+function triggerDownload(blob, filename) {
+  const blobUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = blobUrl
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(blobUrl)
 }
 
 /**
