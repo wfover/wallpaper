@@ -36,11 +36,10 @@ const CONFIG = {
   GITHUB_REPO: 'nuanXinProPic',
   GITHUB_BRANCH: 'main',
 
-  // 本地图床仓库路径（仅 CI 环境使用）
-  // 开源用户无需配置，会自动从线上拉取数据
+  // 本地图床仓库路径（CI 环境自动 checkout）
+  // Fork 用户无需配置，会自动从线上拉取数据
   LOCAL_REPO_PATHS: [
     path.resolve(__dirname, '../nuanXinProPic'), // CI 环境：项目根目录下
-    path.resolve(__dirname, '../../nuanXinProPic'), // 本地开发：同级目录（仅项目维护者使用）
   ],
 
   // 线上数据源（开源用户使用）
