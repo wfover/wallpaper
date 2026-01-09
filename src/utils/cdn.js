@@ -11,7 +11,7 @@
 // ========================================
 
 // CDN 版本号 - GitHub Actions 构建时会自动替换
-export const CDN_VERSION = 'v1.1.17'
+export const CDN_VERSION = 'v1.1.19'
 
 // ========================================
 // CDN 配置

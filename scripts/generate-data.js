@@ -2,6 +2,23 @@
  * 壁纸数据生成脚本
  * 在构建前运行，为三个系列（desktop, mobile, avatar）分别生成 JSON 文件
  * 支持分类文件夹结构：wallpaper/desktop/动漫/xxx.jpg
+ *
+ * 环境变量：
+ *   LOCAL_REPO_PATH - 本地图床仓库路径（可选，作者本人使用）
+ *   ONLINE_DATA_URL - 线上数据源 URL（可选，默认 https://wallpaper.061129.xyz/data）
+ *   SKIP_IMAGE_DIMENSIONS - 跳过图片分辨率检测（CI 加速）
+ *
+ * 数据源优先级：
+ *   1. 本地图床仓库（设置 LOCAL_REPO_PATH）
+ *   2. 线上数据源（从 ONLINE_DATA_URL 拉取）
+ *   3. GitHub API（最后备用）
+ *
+ * 用法：
+ *   # Fork 用户（从线上拉取）
+ *   node scripts/generate-data.js
+ *
+ *   # 作者本人（从本地图床生成）
+ *   LOCAL_REPO_PATH=/path/to/nuanXinProPic node scripts/generate-data.js
  */
 
 import { Buffer } from 'node:buffer'
@@ -14,6 +31,33 @@ import { CHAR_MAP_ENCODE, VERSION_PREFIX } from '../src/utils/codec-config.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+// 加载 .env.development 文件（仅本地开发环境）
+function loadEnvFile() {
+  // CI 环境不加载（GitHub Actions 会设置 CI=true）
+  if (process.env.CI === 'true') {
+    return
+  }
+
+  const envPath = path.resolve(__dirname, '../.env.development')
+  if (fs.existsSync(envPath)) {
+    const content = fs.readFileSync(envPath, 'utf-8')
+    content.split('\n').forEach((line) => {
+      const trimmed = line.trim()
+      // 跳过注释和空行
+      if (!trimmed || trimmed.startsWith('#')) return
+      const [key, ...valueParts] = trimmed.split('=')
+      const value = valueParts.join('=')
+      // 只设置未定义的环境变量（命令行优先）
+      if (key && value && !process.env[key]) {
+        process.env[key] = value
+      }
+    })
+    console.log('  Loaded .env.development')
+  }
+}
+
+loadEnvFile()
 
 // 命令行参数：--github 强制使用 GitHub API（用于调试）
 const FORCE_GITHUB = process.argv.includes('--github')
@@ -36,15 +80,15 @@ const CONFIG = {
   GITHUB_REPO: 'nuanXinProPic',
   GITHUB_BRANCH: 'main',
 
-  // 本地图床仓库路径（CI 环境自动 checkout）
-  // Fork 用户无需配置，会自动从线上拉取数据
-  LOCAL_REPO_PATHS: [
-    path.resolve(__dirname, '../nuanXinProPic'), // CI 环境：项目根目录下
-  ],
+  // 本地图床仓库路径（通过环境变量配置）
+  // 作者本人：设置 LOCAL_REPO_PATH 指向本地图床仓库
+  // Fork 用户：无需配置，会自动从线上拉取数据
+  // CI 环境：通过 checkout action 设置路径
+  LOCAL_REPO_PATH: process.env.LOCAL_REPO_PATH || '',
 
   // 线上数据源（开源用户使用）
   // 当本地图床仓库不存在时，直接从线上拉取已生成的 JSON 数据
-  ONLINE_DATA_BASE_URL: 'https://wallpaper.061129.xyz/data',
+  ONLINE_DATA_BASE_URL: process.env.ONLINE_DATA_URL || 'https://wallpaper.061129.xyz/data',
 
   // 支持的图片格式
   IMAGE_EXTENSIONS: ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
@@ -231,25 +275,27 @@ async function fetchDataFromOnline(seriesId) {
  * @returns {{ files: Array, repoPath: string } | null}
  */
 function fetchWallpapersFromLocal(seriesConfig) {
-  for (const repoPath of CONFIG.LOCAL_REPO_PATHS) {
-    const localWallpaperDir = path.join(repoPath, seriesConfig.wallpaperDir)
+  const localRepoPath = CONFIG.LOCAL_REPO_PATH
 
-    if (!fs.existsSync(localWallpaperDir)) {
-      console.log(`  Path not found: ${localWallpaperDir}`)
-      continue
-    }
-
-    console.log(`  Fetching from local: ${localWallpaperDir}`)
-
-    // 递归扫描目录
-    const files = scanDirectoryRecursive(localWallpaperDir)
-
-    console.log(`  Found ${files.length} image files`)
-    return { files, repoPath }
+  if (!localRepoPath) {
+    console.log('  LOCAL_REPO_PATH not set, skipping local source')
+    return null
   }
 
-  console.log('  No local repository found')
-  return null
+  const localWallpaperDir = path.join(localRepoPath, seriesConfig.wallpaperDir)
+
+  if (!fs.existsSync(localWallpaperDir)) {
+    console.log(`  Path not found: ${localWallpaperDir}`)
+    return null
+  }
+
+  console.log(`  Fetching from local: ${localWallpaperDir}`)
+
+  // 递归扫描目录
+  const files = scanDirectoryRecursive(localWallpaperDir)
+
+  console.log(`  Found ${files.length} image files`)
+  return { files, repoPath: localRepoPath }
 }
 
 /**
@@ -633,39 +679,38 @@ async function processBingSeries(seriesId, seriesConfig) {
     fs.mkdirSync(bingOutputDir, { recursive: true })
   }
 
-  // 1. 优先尝试从本地图床仓库复制
-  for (const repoPath of CONFIG.LOCAL_REPO_PATHS) {
-    if (fs.existsSync(repoPath)) {
-      const bingSrcDir = path.join(repoPath, seriesConfig.metadataDir)
+  // 1. 优先尝试从本地图床仓库复制（需要设置 LOCAL_REPO_PATH）
+  const localRepoPath = CONFIG.LOCAL_REPO_PATH
+  if (localRepoPath && fs.existsSync(localRepoPath)) {
+    const bingSrcDir = path.join(localRepoPath, seriesConfig.metadataDir)
 
-      if (fs.existsSync(bingSrcDir)) {
-        console.log(`  Found local Bing metadata: ${bingSrcDir}`)
+    if (fs.existsSync(bingSrcDir)) {
+      console.log(`  Found local Bing metadata: ${bingSrcDir}`)
 
-        // 复制所有 JSON 文件
-        const files = fs.readdirSync(bingSrcDir).filter(f => f.endsWith('.json'))
-        let totalItems = 0
+      // 复制所有 JSON 文件
+      const files = fs.readdirSync(bingSrcDir).filter(f => f.endsWith('.json'))
+      let totalItems = 0
 
-        for (const file of files) {
-          const srcPath = path.join(bingSrcDir, file)
-          const destPath = path.join(bingOutputDir, file)
-          fs.copyFileSync(srcPath, destPath)
-          console.log(`  Copied: ${file}`)
+      for (const file of files) {
+        const srcPath = path.join(bingSrcDir, file)
+        const destPath = path.join(bingOutputDir, file)
+        fs.copyFileSync(srcPath, destPath)
+        console.log(`  Copied: ${file}`)
 
-          // 统计总数
-          if (file === 'index.json') {
-            try {
-              const indexData = JSON.parse(fs.readFileSync(srcPath, 'utf-8'))
-              totalItems = indexData.total || 0
-            }
-            catch {
-              // 忽略解析错误
-            }
+        // 统计总数
+        if (file === 'index.json') {
+          try {
+            const indexData = JSON.parse(fs.readFileSync(srcPath, 'utf-8'))
+            totalItems = indexData.total || 0
+          }
+          catch {
+            // 忽略解析错误
           }
         }
-
-        console.log(`  ✅ Copied ${files.length} files from local repository`)
-        return { seriesId, count: totalItems, wallpapers: [], fromLocal: true }
       }
+
+      console.log(`  ✅ Copied ${files.length} files from local repository`)
+      return { seriesId, count: totalItems, wallpapers: [], fromLocal: true }
     }
   }
 

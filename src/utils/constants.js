@@ -35,6 +35,14 @@ function buildCategoryBaseUrl(series) {
   return `${import.meta.env.BASE_URL}data/${series}`
 }
 
+// 构建传统单文件 JSON URL（如 desktop.json，在 data/ 根目录）
+function buildLegacyDataUrl(file) {
+  if (DATA_SOURCE === 'r2' && R2_CDN_BASE) {
+    return `${R2_CDN_BASE}/data/${file}${DATA_CACHE_BUSTER}`
+  }
+  return `${import.meta.env.BASE_URL}data/${file}${DATA_CACHE_BUSTER}`
+}
+
 export const SERIES_CONFIG = {
   desktop: {
     id: 'desktop',
@@ -43,7 +51,7 @@ export const SERIES_CONFIG = {
     imageBaseUrl: `${CDN_BASE}/wallpaper/desktop`,
     thumbnailBaseUrl: `${CDN_BASE}/thumbnail/desktop`,
     indexUrl: getDataUrl('desktop', 'index.json'),
-    dataUrl: `${import.meta.env.BASE_URL}data/desktop.json${DATA_CACHE_BUSTER}`,
+    dataUrl: buildLegacyDataUrl('desktop.json'),
     categoryBaseUrl: buildCategoryBaseUrl('desktop'),
     aspectRatio: '16/10',
   },
@@ -54,7 +62,7 @@ export const SERIES_CONFIG = {
     imageBaseUrl: `${CDN_BASE}/wallpaper/mobile`,
     thumbnailBaseUrl: `${CDN_BASE}/thumbnail/mobile`,
     indexUrl: getDataUrl('mobile', 'index.json'),
-    dataUrl: `${import.meta.env.BASE_URL}data/mobile.json${DATA_CACHE_BUSTER}`,
+    dataUrl: buildLegacyDataUrl('mobile.json'),
     categoryBaseUrl: buildCategoryBaseUrl('mobile'),
     aspectRatio: '9/16',
   },
@@ -65,7 +73,7 @@ export const SERIES_CONFIG = {
     imageBaseUrl: `${CDN_BASE}/wallpaper/avatar`,
     thumbnailBaseUrl: `${CDN_BASE}/thumbnail/avatar`,
     indexUrl: getDataUrl('avatar', 'index.json'),
-    dataUrl: `${import.meta.env.BASE_URL}data/avatar.json${DATA_CACHE_BUSTER}`,
+    dataUrl: buildLegacyDataUrl('avatar.json'),
     categoryBaseUrl: buildCategoryBaseUrl('avatar'),
     aspectRatio: '1/1',
   },
