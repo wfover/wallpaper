@@ -15,14 +15,30 @@ export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSIO
 // 数据请求版本参数（使用 CDN_VERSION 破坏缓存，确保图床更新后数据同步刷新）
 export const DATA_CACHE_BUSTER = `?v=${CDN_VERSION}`
 
-// CDN URL 动态构建（防止静态分析提取完整链接）
+// ========================================
+// CDN 配置 (R2 迁移支持)
+// ========================================
+
+// R2 CDN 基础 URL（从环境变量读取）
+export const R2_CDN_BASE = import.meta.env.VITE_CDN_BASE || ''
+
+// 数据源配置：'r2' | 'local'
+export const DATA_SOURCE = import.meta.env.VITE_DATA_SOURCE || 'local'
+
+// jsDelivr CDN URL 动态构建（防止静态分析提取完整链接）
 const _cdnParts = {
   p: 'https:/',
   h: '/cdn.jsdelivr.net',
   g: '/gh/IT-NuanxinPro',
   r: `/nuanXinProPic@${CDN_VERSION}`,
 }
-const CDN_BASE = `${_cdnParts.p}${_cdnParts.h}${_cdnParts.g}${_cdnParts.r}`
+const JSDELIVR_CDN_BASE = `${_cdnParts.p}${_cdnParts.h}${_cdnParts.g}${_cdnParts.r}`
+
+// 主 CDN 基础 URL（优先 R2，回退 jsDelivr）
+const CDN_BASE = R2_CDN_BASE || JSDELIVR_CDN_BASE
+
+// 导出 jsDelivr 基础 URL（用于回退）
+export { JSDELIVR_CDN_BASE }
 
 // 备用：raw.githubusercontent.com（如 jsdelivr 不可用时切换）
 // const _cdnParts = { p: 'https:/', h: '/raw.githubusercontent.com', g: '/IT-NuanxinPro', r: '/nuanXinProPic/main' }
@@ -30,6 +46,22 @@ const CDN_BASE = `${_cdnParts.p}${_cdnParts.h}${_cdnParts.g}${_cdnParts.r}`
 // ========================================
 // 四大系列配置
 // ========================================
+
+// 数据 URL 构建函数（支持 R2 数据源）
+function buildDataUrl(series, file = 'index.json') {
+  if (DATA_SOURCE === 'r2' && R2_CDN_BASE) {
+    return `${R2_CDN_BASE}/data/${series}/${file}${DATA_CACHE_BUSTER}`
+  }
+  return `${import.meta.env.BASE_URL}data/${series}/${file}${DATA_CACHE_BUSTER}`
+}
+
+function buildCategoryBaseUrl(series) {
+  if (DATA_SOURCE === 'r2' && R2_CDN_BASE) {
+    return `${R2_CDN_BASE}/data/${series}`
+  }
+  return `${import.meta.env.BASE_URL}data/${series}`
+}
+
 export const SERIES_CONFIG = {
   desktop: {
     id: 'desktop',
@@ -38,11 +70,11 @@ export const SERIES_CONFIG = {
     imageBaseUrl: `${CDN_BASE}/wallpaper/desktop`,
     thumbnailBaseUrl: `${CDN_BASE}/thumbnail/desktop`,
     // 新架构：指向分类索引文件（带版本参数防缓存）
-    indexUrl: `${import.meta.env.BASE_URL}data/desktop/index.json${DATA_CACHE_BUSTER}`,
+    indexUrl: buildDataUrl('desktop', 'index.json'),
     // 向后兼容：保留旧的 dataUrl（如需回退）
     dataUrl: `${import.meta.env.BASE_URL}data/desktop.json${DATA_CACHE_BUSTER}`,
     // 分类数据目录（动态拼接时需手动添加版本参数）
-    categoryBaseUrl: `${import.meta.env.BASE_URL}data/desktop`,
+    categoryBaseUrl: buildCategoryBaseUrl('desktop'),
     aspectRatio: '16/10',
   },
   mobile: {
@@ -52,11 +84,11 @@ export const SERIES_CONFIG = {
     imageBaseUrl: `${CDN_BASE}/wallpaper/mobile`,
     thumbnailBaseUrl: `${CDN_BASE}/thumbnail/mobile`,
     // 新架构：指向分类索引文件（带版本参数防缓存）
-    indexUrl: `${import.meta.env.BASE_URL}data/mobile/index.json${DATA_CACHE_BUSTER}`,
+    indexUrl: buildDataUrl('mobile', 'index.json'),
     // 向后兼容：保留旧的 dataUrl（如需回退）
     dataUrl: `${import.meta.env.BASE_URL}data/mobile.json${DATA_CACHE_BUSTER}`,
     // 分类数据目录（动态拼接时需手动添加版本参数）
-    categoryBaseUrl: `${import.meta.env.BASE_URL}data/mobile`,
+    categoryBaseUrl: buildCategoryBaseUrl('mobile'),
     aspectRatio: '9/16',
   },
   avatar: {
@@ -66,11 +98,11 @@ export const SERIES_CONFIG = {
     imageBaseUrl: `${CDN_BASE}/wallpaper/avatar`,
     thumbnailBaseUrl: `${CDN_BASE}/thumbnail/avatar`,
     // 新架构：指向分类索引文件（带版本参数防缓存）
-    indexUrl: `${import.meta.env.BASE_URL}data/avatar/index.json${DATA_CACHE_BUSTER}`,
+    indexUrl: buildDataUrl('avatar', 'index.json'),
     // 向后兼容：保留旧的 dataUrl（如需回退）
     dataUrl: `${import.meta.env.BASE_URL}data/avatar.json${DATA_CACHE_BUSTER}`,
     // 分类数据目录（动态拼接时需手动添加版本参数）
-    categoryBaseUrl: `${import.meta.env.BASE_URL}data/avatar`,
+    categoryBaseUrl: buildCategoryBaseUrl('avatar'),
     aspectRatio: '1/1',
   },
   bing: {
@@ -83,10 +115,10 @@ export const SERIES_CONFIG = {
     // 本地 4K 原图基础路径
     imageBaseUrl: `${CDN_BASE}/bing`,
     // 元数据 API（带版本参数防缓存）
-    indexUrl: `${import.meta.env.BASE_URL}data/bing/index.json${DATA_CACHE_BUSTER}`,
-    latestUrl: `${import.meta.env.BASE_URL}data/bing/latest.json${DATA_CACHE_BUSTER}`,
+    indexUrl: buildDataUrl('bing', 'index.json'),
+    latestUrl: buildDataUrl('bing', 'latest.json'),
     // 年度数据目录（动态拼接时需手动添加版本参数）
-    yearBaseUrl: `${import.meta.env.BASE_URL}data/bing`,
+    yearBaseUrl: buildCategoryBaseUrl('bing'),
     aspectRatio: '16/9',
     isDaily: true,
     hasMetadata: true,
