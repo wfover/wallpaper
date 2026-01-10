@@ -201,15 +201,11 @@ export function getDisplayFilename(filename) {
 }
 
 /**
- * 下载文件（带防护机制）
+ * 下载文件
  * @param {string} url - 文件 URL
  * @param {string} filename - 保存的文件名
- * @param {number} delay - 延迟时间（毫秒），默认 300ms
  */
-export async function downloadFile(url, filename, delay = 300) {
-  // 延迟执行，增加批量下载成本
-  await new Promise(resolve => setTimeout(resolve, delay))
-
+export async function downloadFile(url, filename) {
   try {
     // 动态重建 URL（如果是 CDN 链接）
     let finalUrl = url

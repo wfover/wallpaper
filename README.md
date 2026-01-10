@@ -79,7 +79,7 @@
 | 路由 | Vue Router 4 |
 | 状态管理 | Pinia |
 | 部署 | GitHub Pages (生产) / Vercel (测试) |
-| CDN 加速 | Cloudflare |
+| CDN 加速 | Cloudflare + jsDelivr |
 | 统计分析 | Cloudflare Web Analytics + Umami |
 
 ### 构建优化
@@ -194,12 +194,14 @@ wallpaper-gallery/
 - **CDN 外部化** - Vue / Vue Router / vue-demi 通过 unpkg CDN 加载
 - **CSS 内联** - 关键 CSS 内联到 HTML，加快首屏渲染
 - **CLS 优化** - 图片占位符、滚动条预留空间，避免布局偏移
-- **图片优化** - WebP 格式、缩略图预生成、懒加载
+- **图片优化** - WebP 格式、缩略图预生成、懒加载、首屏图片高优先级加载
 - **代码分割** - 路由级别代码分割，按需加载；Element Plus / Vant / GSAP 独立分包
-- **预连接** - DNS 预解析、预连接到 CDN 域名
+- **预连接** - DNS 预解析、预连接到 CDN 域名（jsDelivr、Bing CDN、图片代理服务）
 - **Brotli 压缩** - 静态资源预压缩，体积减少 70%+
 - **2K/4K 大屏适配** - 容器最大宽度递增（1600/2000/2400px）
 - **Cloudflare 缓存** - 部署后自动清除缓存，确保用户及时获取更新
+- **Web Worker** - 大数据解码在 Worker 线程执行，避免阻塞主线程
+- **分类按需加载** - 首屏只加载前3个分类，剩余分类后台加载
 
 ## 📊 SEO 优化
 
