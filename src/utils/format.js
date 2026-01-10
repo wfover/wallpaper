@@ -13,12 +13,22 @@ const _urlParts = {
 }
 
 /**
- * 动态构建图片 URL（防止静态分析）
+ * 动态构建图片 URL（支持 cdnTag 缓存优化）
  * @param {string} path - 相对路径，如 /wallpaper/desktop/xxx.png
+ * @param {string} [cdnTag] - 可选的 CDN tag (用于精准缓存控制)
  * @returns {string} 完整 URL
+ *
+ * @example
+ * // 使用默认 CDN_VERSION
+ * buildImageUrl('/wallpaper/desktop/xxx.png')
+ *
+ * // 使用图片专属 tag (推荐)
+ * buildImageUrl('/wallpaper/desktop/xxx.png', 'v1.0.5')
  */
-export function buildImageUrl(path) {
-  const { p, h, g, r } = _urlParts
+export function buildImageUrl(path, cdnTag) {
+  const { p, h, g } = _urlParts
+  const tag = cdnTag || CDN_VERSION
+  const r = `/nuanXinProPic@${tag}`
   return `${p}${h}${g}${r}${path}`
 }
 

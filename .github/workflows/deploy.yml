@@ -5,13 +5,14 @@ on:
   push:
     branches: [main]
 
-  # 定时触发：每天 UTC 0:00（北京时间 8:00）自动同步壁纸数据
+  # 定时触发：每天 UTC 18:00（北京时间次日 02:00）- 低峰期,图床同步后 2 小时部署
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 18 * * *'
 
   # 手动触发
   workflow_dispatch:
 
+# 设置 GITHUB_TOKEN 权限
 # 设置 GITHUB_TOKEN 权限
 permissions:
   contents: read
@@ -66,37 +67,22 @@ jobs:
           path: nuanXinProPic
           fetch-depth: 1  # 只需最新版本，时间戳从备份文件恢复
 
-      - name: Restore file timestamps from backup
+      # 性能优化: 不再恢复文件时间戳
+      # generate-data.js 直接从 timestamps-backup-all.txt 读取时间戳,无需恢复文件 mtime
+      # 这避免了 touch 数百/数千个文件,显著提升构建速度
+      - name: Verify timestamp backup file
         run: |
           cd nuanXinProPic
 
-          # 优先使用完整备份文件（包含所有三个系列）
           if [ -f "timestamps-backup-all.txt" ]; then
-            echo "✅ Found timestamps-backup-all.txt, restoring all file timestamps..."
-
-            # 使用完整备份文件恢复时间戳
-            chmod +x scripts/restore-timestamps.sh
-            BACKUP_FILE=timestamps-backup-all.txt ./scripts/restore-timestamps.sh
-
-            echo "✅ All file timestamps restored from backup"
-          elif [ -f "timestamps-backup.txt" ]; then
-            echo "✅ Found timestamps-backup.txt, restoring desktop file timestamps..."
-
-            # 使用旧的备份文件（仅 desktop）
-            chmod +x scripts/restore-timestamps.sh
-            ./scripts/restore-timestamps.sh
-
-            echo "✅ Desktop file timestamps restored from backup"
+            TOTAL=$(wc -l < timestamps-backup-all.txt | tr -d ' ')
+            echo "✅ Found timestamps-backup-all.txt"
+            echo "📊 Total images with timestamp records: $TOTAL"
+            echo "ℹ️  generate-data.js will read timestamps from this file directly"
           else
-            echo "⚠️ No timestamps backup file found, skipping timestamp restoration"
+            echo "⚠️ Warning: timestamps-backup-all.txt not found"
+            echo "ℹ️  generate-data.js will use file system mtime (not recommended)"
           fi
-
-          # 验证：显示几个文件的时间
-          echo "📅 Sample file timestamps:"
-          echo "Desktop:"
-          ls -lh wallpaper/desktop/动漫/二次元/ 2>/dev/null | head -3 || echo "Desktop directory not found"
-          echo "Mobile:"
-          ls -lh wallpaper/mobile/动漫/ 2>/dev/null | head -3 || echo "Mobile directory not found"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4

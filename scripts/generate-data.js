@@ -36,12 +36,15 @@ const CONFIG = {
   GITHUB_REPO: 'nuanXinProPic',
   GITHUB_BRANCH: 'main',
 
-  // 本地图床仓库路径（仅 CI 环境使用）
-  // 开源用户无需配置，会自动从线上拉取数据
+  // 本地图床仓库路径（优先级从高到低）
+  // 1. 环境变量 LOCAL_REPO_PATH（推荐，在 .env.local 中配置）
+  // 2. CI 环境：项目根目录下的 nuanXinProPic
+  // 3. 本地开发：同级目录的 nuanXinProPic
   LOCAL_REPO_PATHS: [
-    path.resolve(__dirname, '../nuanXinProPic'), // CI 环境：项目根目录下
-    path.resolve(__dirname, '../../nuanXinProPic'), // 本地开发：同级目录（仅项目维护者使用）
-  ],
+    process.env.LOCAL_REPO_PATH, // 优先使用环境变量
+    path.resolve(__dirname, '../nuanXinProPic'), // CI 环境
+    path.resolve(__dirname, '../../nuanXinProPic'), // 本地开发（同级目录）
+  ].filter(Boolean), // 过滤掉 undefined
 
   // 线上数据源（开源用户使用）
   // 当本地图床仓库不存在时，直接从线上拉取已生成的 JSON 数据
