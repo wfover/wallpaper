@@ -451,6 +451,7 @@ function resetFilters() {
         :teleport="null"
         :close-on-click-overlay="true"
         :lock-scroll="true"
+        :duration="0.3"
         safe-area-inset-bottom
       >
         <div class="popup-content">
@@ -526,25 +527,39 @@ function resetFilters() {
   justify-content: space-between;
   gap: $spacing-md;
   padding: $spacing-md $spacing-lg;
-  background: var(--color-bg-secondary);
-  border-radius: $radius-md;
-  border: 1px solid var(--color-border);
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: $radius-lg;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: $spacing-lg;
 
   // 吸顶效果（PC 和移动端通用）
-  position: -webkit-sticky; // iOS Safari 兼容
+  position: -webkit-sticky;
   position: sticky;
-  top: $header-height; // 固定在导航栏下方（72px）
-  z-index: 99; // 低于 AppHeader 的 100
+  top: $header-height;
+  z-index: 99;
 
   // 确保 sticky 在各浏览器正常工作
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
 
+  [data-theme='dark'] & {
+    background: rgba(15, 23, 42, 0.75);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
   &.has-filters {
-    border-color: var(--color-accent-light);
-    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, rgba(99, 102, 241, 0.03) 100%);
+    border-color: rgba(102, 126, 234, 0.3);
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 30px rgba(102, 126, 234, 0.15);
+
+    [data-theme='dark'] & {
+      background: rgba(15, 23, 42, 0.85);
+      border-color: rgba(102, 126, 234, 0.25);
+    }
   }
 }
 
@@ -580,14 +595,15 @@ function resetFilters() {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
+  padding: 8px 14px;
   font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  color: var(--color-accent);
-  background: var(--color-accent-light);
-  border-radius: $radius-md;
+  font-weight: $font-weight-semibold;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: $radius-lg;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
 
   svg {
     width: 14px;
@@ -595,9 +611,11 @@ function resetFilters() {
   }
 
   &:hover {
-    background: var(--color-accent);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
     color: white;
-    transform: scale(1.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
   }
 
   &:active {
@@ -614,10 +632,18 @@ function resetFilters() {
 .view-mode-toggle {
   display: flex;
   align-items: center;
-  background: var(--color-bg-hover);
-  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $radius-lg;
   padding: 4px;
   position: relative;
+
+  [data-theme='dark'] & {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .view-mode-slider {
@@ -626,10 +652,10 @@ function resetFilters() {
   left: 4px;
   width: 32px;
   height: 32px;
-  background: var(--color-bg-card);
-  border-radius: $radius-sm;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: $radius-md;
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+  transition: transform 350ms cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 0;
 
   &.is-list {
@@ -647,18 +673,18 @@ function resetFilters() {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: $radius-sm;
+  border-radius: $radius-md;
   color: var(--color-text-muted);
   background: transparent;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 1;
 
   svg {
     width: 18px;
     height: 18px;
-    transition: transform 0.2s ease;
+    transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &:hover {
@@ -670,7 +696,7 @@ function resetFilters() {
   }
 
   &.is-active {
-    color: var(--color-accent);
+    color: white;
   }
 }
 
@@ -684,6 +710,60 @@ function resetFilters() {
   display: flex;
   align-items: center;
   gap: $spacing-sm;
+
+  // Element Plus Select 组件高级感样式
+  :deep(.el-select) {
+    --el-select-border-color-hover: rgba(102, 126, 234, 0.4);
+
+    .el-select__wrapper {
+      background: rgba(255, 255, 255, 0.6) !important;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.08) !important;
+      border-radius: 10px !important;
+      box-shadow: none !important;
+      transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+      padding: 0 14px !important;
+      height: 38px !important;
+
+      [data-theme='dark'] & {
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+      }
+
+      &:hover {
+        border-color: rgba(102, 126, 234, 0.4) !important;
+      }
+
+      &.is-focused {
+        border-color: rgba(102, 126, 234, 0.6) !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+      }
+    }
+
+    .el-select__selection {
+      .el-select__selected-item {
+        color: var(--color-text-primary) !important;
+        font-size: 14px !important;
+      }
+    }
+
+    .el-select__placeholder {
+      color: var(--color-text-muted) !important;
+    }
+
+    .el-select__suffix {
+      .el-icon {
+        color: var(--color-text-muted) !important;
+        transition: all 250ms !important;
+      }
+    }
+
+    &.is-focus .el-select__suffix .el-icon {
+      transform: rotate(180deg);
+      color: #667eea !important;
+    }
+  }
 }
 
 .filter-label {
@@ -697,7 +777,7 @@ function resetFilters() {
 .filter-right-mobile {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
+  gap: 10px;
 }
 
 // 移动端分类按钮
@@ -705,14 +785,22 @@ function resetFilters() {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 10px;
+  padding: 9px 12px;
   font-size: 13px;
   color: var(--color-text-secondary);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  max-width: 100px; // 限制最大宽度
-  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  max-width: 110px;
+  height: 38px;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  [data-theme='dark'] & {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
 
   svg:first-child {
     width: 14px;
@@ -736,12 +824,13 @@ function resetFilters() {
   }
 
   &.is-active {
-    color: var(--color-accent);
-    border-color: var(--color-accent-light);
-    background: var(--color-accent-light);
+    color: white;
+    border-color: transparent;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
 
     svg {
-      color: var(--color-accent);
+      color: white;
     }
   }
 
@@ -754,38 +843,45 @@ function resetFilters() {
 .view-mode-toggle-mobile {
   display: flex;
   align-items: center;
-  background: var(--color-bg-hover);
-  border-radius: $radius-sm;
-  padding: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 3px;
   position: relative;
-  height: 40px; // 增大高度便于点击
+  height: 38px;
+
+  [data-theme='dark'] & {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .view-mode-slider-mobile {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 36px; // 增大尺寸
-  height: 36px;
-  background: var(--color-bg-card);
-  border-radius: 4px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  top: 3px;
+  left: 3px;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 9px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  transition: transform 350ms cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 0;
 
-  // 移动端只有两个位置：网格（默认）和列表
   &.is-grid {
     transform: translateX(0);
   }
 
   &.is-list {
-    transform: translateX(36px); // 滑动距离等于按钮宽度
+    transform: translateX(32px);
   }
 }
 
 .view-mode-btn-mobile {
-  width: 36px; // 增大尺寸便于点击
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -794,27 +890,32 @@ function resetFilters() {
   position: relative;
   z-index: 1;
   color: var(--color-text-muted);
-  transition: color 0.2s ease;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
 
   svg {
-    width: 18px; // 稍大的图标
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 
   &.is-active {
-    color: var(--color-accent);
+    color: white;
   }
 }
 
 // 紧凑版筛选按钮
 .filter-btn-compact {
-  padding: 8px 12px; // 增大内边距
-  min-width: 40px;
-  height: 40px; // 与视图切换按钮对齐
+  padding: 0;
+  min-width: 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 }
 
@@ -826,22 +927,33 @@ function resetFilters() {
   font-size: 14px;
   font-weight: 500;
   color: var(--color-text-primary);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   position: relative;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  [data-theme='dark'] & {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
 
   svg {
     width: 16px;
     height: 16px;
-    color: var(--color-accent);
+    color: #667eea;
+  }
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.3);
   }
 
   &:active {
     transform: scale(0.95);
-    background: var(--color-bg-hover);
   }
 }
 
@@ -855,24 +967,29 @@ function resetFilters() {
   font-size: 11px;
   font-weight: 600;
   color: white;
-  background: var(--color-accent);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
 }
 
 // 弹窗样式
 .filter-popup {
   :deep(.van-popup) {
-    background: var(--color-bg-primary);
+    background: rgba(255, 255, 255, 0.95);
+
+    [data-theme='dark'] & {
+      background: rgba(15, 23, 42, 0.98);
+    }
   }
 }
 
 .popup-content {
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-primary);
+  background: transparent;
 }
 
 .popup-header {
@@ -880,8 +997,12 @@ function resetFilters() {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   flex-shrink: 0;
+
+  [data-theme='dark'] & {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .popup-title {
@@ -893,11 +1014,13 @@ function resetFilters() {
 .popup-reset {
   padding: 6px 12px;
   font-size: 14px;
-  color: var(--color-text-muted);
+  color: #667eea;
   background: transparent;
+  font-weight: 500;
+  transition: opacity 200ms;
 
   &:active {
-    color: var(--color-accent);
+    opacity: 0.7;
   }
 }
 
@@ -905,23 +1028,36 @@ function resetFilters() {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   color: var(--color-text-muted);
-  background: transparent;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 50%;
+  transition: all 250ms;
+
+  [data-theme='dark'] & {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:active {
+    background: rgba(102, 126, 234, 0.15);
+    color: #667eea;
   }
 }
 
 .popup-body {
-  padding: 16px;
+  padding: 20px 16px;
 }
 
 .filter-group {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 
   &:last-child {
     margin-bottom: 0;
@@ -929,36 +1065,44 @@ function resetFilters() {
 }
 
 .group-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--color-text-muted);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .option-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .option-btn {
-  padding: 10px 16px;
+  padding: 12px 18px;
   font-size: 14px;
   color: var(--color-text-secondary);
-  background: var(--color-bg-hover);
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  [data-theme='dark'] & {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
 
   &:active {
     transform: scale(0.95);
   }
 
   &.is-active {
-    color: var(--color-accent);
-    background: var(--color-accent-light);
-    font-weight: 500;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
   }
 }
 
@@ -988,23 +1132,33 @@ function resetFilters() {
 .popup-footer {
   padding: 16px;
   padding-bottom: max(16px, env(safe-area-inset-bottom));
-  border-top: 1px solid var(--color-border);
-  background: var(--color-bg-primary);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  background: transparent;
+
+  [data-theme='dark'] & {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .confirm-btn {
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   font-size: 16px;
   font-weight: 600;
   color: white;
-  background: var(--color-accent);
-  border-radius: 10px;
-  transition: all 0.2s ease;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    transform: translateY(-1px);
+  }
 
   &:active {
     transform: scale(0.98);
-    background: var(--color-accent-hover);
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
   }
 }
 
@@ -1027,23 +1181,29 @@ function resetFilters() {
     position: fixed;
     left: 0;
     right: 0;
-    top: $header-height; // 72px，紧贴导航栏下方
-    border-radius: 0; // 移除圆角，与导航栏融合
+    top: $header-height;
+    border-radius: 0;
     border-left: none;
     border-right: none;
     border-top: none;
     margin-bottom: 0;
     padding: $spacing-sm $spacing-md;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     // 移除 sticky 相关的 hack
     -webkit-transform: none;
     transform: none;
     // 移动端强制不换行
     flex-wrap: nowrap;
+
+    [data-theme='dark'] & {
+      background: rgba(15, 23, 42, 0.95);
+    }
   }
 
   .filter-left {
     flex: 1;
-    min-width: 0; // 允许收缩
+    min-width: 0;
     overflow: hidden;
 
     .result-count {
@@ -1054,7 +1214,7 @@ function resetFilters() {
   }
 
   .filter-right-mobile {
-    flex-shrink: 0; // 不收缩
+    flex-shrink: 0;
   }
 }
 </style>

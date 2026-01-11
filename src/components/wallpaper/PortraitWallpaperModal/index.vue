@@ -11,7 +11,10 @@ import { downloadFile } from '@/utils/format'
 import { getWallpaperDownloadCount, getWallpaperViewCount, isSupabaseConfigured, recordDownload, recordView } from '@/utils/supabase'
 
 import { useDeviceMode } from './composables/useDeviceMode'
+import AvatarMobileModal from './AvatarMobileModal.vue'
+import DesktopModal from './DesktopModal.vue'
 import DeviceMode from './DeviceMode.vue'
+import MobileModal from './MobileModal.vue'
 import ModalContent from './ModalContent.vue'
 import ModalInfo from './ModalInfo.vue'
 
@@ -30,8 +33,17 @@ const emit = defineEmits(['close'])
 
 // Composables
 const { currentSeries } = useWallpaperType()
-const { isMobile } = useDevice()
+const { isMobile, isDesktop } = useDevice()
 const deviceMode = useDeviceMode()
+
+// PC端使用独立的桌面弹窗
+const useDesktopModal = computed(() => isDesktop.value && currentSeries.value === 'mobile')
+
+// 移动端手机壁纸使用独立的移动端弹窗
+const useMobileModal = computed(() => isMobile.value && currentSeries.value === 'mobile')
+
+// 移动端头像使用独立的头像弹窗
+const useAvatarMobileModal = computed(() => isMobile.value && currentSeries.value === 'avatar')
 
 // 模板引用
 const contentRef = ref(null)
@@ -53,6 +65,11 @@ const isAvatarSeries = computed(() => currentSeries.value === 'avatar')
 
 // 监听 isOpen 变化
 watch(() => props.isOpen, async (isOpen) => {
+  // 如果使用独立的弹窗组件（DesktopModal、MobileModal 或 AvatarMobileModal），不在这里处理
+  if (useDesktopModal.value || useMobileModal.value || useAvatarMobileModal.value) {
+    return
+  }
+  
   if (isOpen && props.wallpaper) {
     handleOpen()
   }
@@ -215,17 +232,46 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
-  document.body.classList.remove('modal-open')
-  document.body.style.top = ''
+  
+  // 只有当不使用独立弹窗组件时才清理滚动状态
+  if (!useDesktopModal.value && !useMobileModal.value && !useAvatarMobileModal.value) {
+    document.body.classList.remove('modal-open')
+    document.body.style.top = ''
 
-  if (savedScrollY.value > 0) {
-    window.scrollTo({ top: savedScrollY.value, behavior: 'instant' })
+    if (savedScrollY.value > 0) {
+      window.scrollTo({ top: savedScrollY.value, behavior: 'instant' })
+    }
   }
 })
 </script>
 
 <template>
-  <Teleport to="body">
+  <!-- PC端手机壁纸使用独立的桌面弹窗 -->
+  <DesktopModal
+    v-if="useDesktopModal"
+    :wallpaper="wallpaper"
+    :is-open="isOpen"
+    @close="emit('close')"
+  />
+
+  <!-- 移动端手机壁纸使用独立的移动端弹窗 -->
+  <MobileModal
+    v-else-if="useMobileModal"
+    :wallpaper="wallpaper"
+    :is-open="isOpen"
+    @close="emit('close')"
+  />
+
+  <!-- 移动端头像使用独立的头像弹窗 -->
+  <AvatarMobileModal
+    v-else-if="useAvatarMobileModal"
+    :wallpaper="wallpaper"
+    :is-open="isOpen"
+    @close="emit('close')"
+  />
+
+  <!-- 其他系列使用原有弹窗 -->
+  <Teleport v-else to="body">
     <Transition name="modal" @after-leave="onModalAfterLeave">
       <div
         v-if="isVisible && wallpaper"

@@ -5,8 +5,6 @@ import DiyAvatarBanner from '@/components/avatar/DiyAvatarBanner.vue'
 import AnnouncementBanner from '@/components/common/feedback/AnnouncementBanner.vue'
 import FilterPanel from '@/components/common/form/FilterPanel.vue'
 import BackToTop from '@/components/common/navigation/BackToTop.vue'
-import PopularWallpapers3D from '@/components/home/PopularWallpapers3D.vue'
-// 2D 版本备用：import PopularWallpapers from '@/components/home/PopularWallpapers.vue'
 import PortraitWallpaperModal from '@/components/wallpaper/PortraitWallpaperModal/index.vue'
 import WallpaperGrid from '@/components/wallpaper/WallpaperGrid/index.vue'
 import WallpaperModal from '@/components/wallpaper/WallpaperModal/index.vue'
@@ -214,26 +212,6 @@ onMounted(async () => {
     <div class="container">
       <!-- Announcement Banner -->
       <AnnouncementBanner />
-
-      <!-- 热门壁纸 3D Coverflow - 仅电脑壁纸系列显示 -->
-      <PopularWallpapers3D
-        v-if="currentSeries === 'desktop'"
-        :series="currentSeries"
-        :wallpapers="wallpaperStore.wallpapers"
-        :popularity-data="popularityStore.allTimeData"
-        :loading="loading"
-        @select="handleSelectWallpaper"
-      />
-
-      <!-- 热门壁纸 2D 版本（备用，如需切换可替换上方组件）
-      <PopularWallpapers
-        v-if="currentSeries === 'desktop'"
-        :series="currentSeries"
-        :wallpapers="wallpaperStore.wallpapers"
-        :popularity-data="popularityStore.allTimeData"
-        :loading="loading"
-        @select="handleSelectWallpaper"
-      /> -->
 
       <!-- DIY 头像工具入口 - 仅头像系列显示 -->
       <DiyAvatarBanner v-if="currentSeries === 'avatar'" />

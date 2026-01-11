@@ -9,6 +9,7 @@ import { downloadFile, formatDate, formatFileSize, formatRelativeTime, getDispla
 import { getWallpaperDownloadCount, getWallpaperViewCount, isSupabaseConfigured, recordDownload, recordView } from '@/utils/supabase'
 import ImageCropModal from '../ImageCropModal.vue'
 import BingWallpaperInfo from './BingWallpaperInfo.vue'
+import DesktopModal from './DesktopModal.vue'
 
 const props = defineProps({
   wallpaper: {
@@ -28,6 +29,9 @@ const { isMobile, isTablet, isDesktop, isLandscape, isPortrait } = useDevice()
 
 // 获取当前系列
 const { currentSeries } = useWallpaperType()
+
+// PC端桌面壁纸和每日Bing使用独立的桌面弹窗（带 MacBook 预览）
+const useDesktopModal = computed(() => isDesktop.value && (currentSeries.value === 'desktop' || currentSeries.value === 'bing'))
 
 // 是否显示裁剪功能（PC端和平板端，仅 desktop 系列）
 // 平板用户也需要裁剪功能（4:3 iPad, 16:10 安卓, 3:2 Surface）
@@ -427,7 +431,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
+  <!-- PC端桌面壁纸使用独立的桌面弹窗（带 MacBook 预览） -->
+  <DesktopModal
+    v-if="useDesktopModal"
+    :wallpaper="wallpaper"
+    :is-open="isOpen"
+    @close="emit('close')"
+    @open-crop="openCropModal"
+  />
+
+  <!-- 移动端和其他情况使用原有弹窗 -->
+  <Teleport v-else to="body">
     <div v-if="isOpen && wallpaper" ref="modalRef" class="modal-overlay">
       <div ref="contentRef" class="modal-content" :class="{ 'modal-content--horizontal': useHorizontalLayout }">
         <!-- Close Button -->

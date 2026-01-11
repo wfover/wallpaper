@@ -476,6 +476,15 @@ onUnmounted(() => {
   // 清除所有未完成的定时器
   timers.forEach(timer => clearTimeout(timer))
   timers.clear()
+  
+  // 清理所有 GSAP 动画，防止内存泄漏
+  gsap.killTweensOf('.wallpaper-card')
+  if (gridRef.value) {
+    const cards = gridRef.value.querySelectorAll('.wallpaper-card')
+    if (cards.length > 0) {
+      gsap.killTweensOf(cards)
+    }
+  }
 })
 
 // 监听 wallpapers 变化（筛选/搜索/分类切换时）
