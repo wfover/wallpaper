@@ -444,6 +444,14 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
       errorType.value = null
       isBackgroundLoading.value = false
       expectedTotal.value = bingWallpapersCache.value.length
+      // 恢复 loadedCategories，防止切换系列后数据重复加载
+      loadedCategories.value = new Set()
+      bingWallpapersCache.value.forEach((w) => {
+        loadedCategories.value.add(w.date)
+        // 同时添加年份标记
+        const year = w.date.substring(0, 4)
+        loadedCategories.value.add(year)
+      })
       return
     }
 

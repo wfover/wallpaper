@@ -1,18 +1,13 @@
 // ========================================
-// 热门数据管理 Store（重构版）
+// 热门数据管理 Store（简化版）
 // ========================================
-// 使用静态 JSON + 乐观更新，不再直接查询 Supabase 视图
+// 使用静态 JSON 加载数据，不再使用乐观更新
 
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import {
-  getOptimisticQueue,
-  incrementOptimistic,
-} from '@/services/localStatsCache'
-import {
   loadStaticStats,
   loadStatsFromSupabase,
-  onOptimisticUpdate,
 } from '@/services/statsService'
 
 export const usePopularityStore = defineStore('popularity', () => {
@@ -32,27 +27,17 @@ export const usePopularityStore = defineStore('popularity', () => {
   // 是否已加载
   const loaded = ref(false)
 
-  // 乐观更新版本号（用于触发 computed 重新计算）
-  const optimisticVersion = ref(0)
-
   // ========================================
   // Getters
   // ========================================
 
-  // 热门数据（按浏览量排序的数组）- 合并乐观更新
+  // 热门数据（按浏览量排序的数组）
   const allTimeData = computed(() => {
-    // 依赖 optimisticVersion 触发响应式更新
-    // eslint-disable-next-line no-unused-expressions
-    optimisticVersion.value
-    const queue = getOptimisticQueue()
     const entries = Array.from(statsMap.value.entries())
     return entries
       .map(([imageId, stats]) => {
-        // 合并乐观更新
-        const optimisticViews = queue.views[imageId] || 0
-        const optimisticDownloads = queue.downloads[imageId] || 0
-        const views = (stats.views || 0) + optimisticViews
-        const downloads = (stats.downloads || 0) + optimisticDownloads
+        const views = stats.views || 0
+        const downloads = stats.downloads || 0
         return {
           filename: imageId,
           image_id: imageId,
@@ -79,7 +64,6 @@ export const usePopularityStore = defineStore('popularity', () => {
   })
 
   // 兼容旧 API：weeklyMap 和 monthlyMap 返回相同数据
-  // 因为静态化后不再区分时间范围
   const weeklyMap = computed(() => popularityMap.value)
   const monthlyMap = computed(() => popularityMap.value)
 
@@ -105,62 +89,23 @@ export const usePopularityStore = defineStore('popularity', () => {
    * 获取指定文件的下载次数
    */
   function getDownloadCount(filename) {
-    // 依赖 optimisticVersion 触发响应式更新
-    // eslint-disable-next-line no-unused-expressions
-    optimisticVersion.value
-
     const stats = statsMap.value.get(filename)
-    const baseDownloads = stats?.downloads || 0
-
-    // 合并乐观更新（即使没有静态数据也要返回乐观更新的值）
-    const queue = getOptimisticQueue()
-    const optimistic = queue.downloads[filename] || 0
-    return baseDownloads + optimistic
+    return stats?.downloads || 0
   }
 
   /**
    * 获取指定文件的浏览次数
    */
   function getViewCount(filename) {
-    // 依赖 optimisticVersion 触发响应式更新
-    // eslint-disable-next-line no-unused-expressions
-    optimisticVersion.value
-
     const stats = statsMap.value.get(filename)
-    const baseViews = stats?.views || 0
-
-    // 合并乐观更新（即使没有静态数据也要返回乐观更新的值）
-    const queue = getOptimisticQueue()
-    const optimistic = queue.views[filename] || 0
-    return baseViews + optimistic
+    return stats?.views || 0
   }
 
   /**
    * 获取指定文件的热门分数
    */
   function getPopularityScore(filename, _timeRange = 'all') {
-    // 不再区分时间范围
     return popularityMap.value.get(filename)?.score || 0
-  }
-
-  /**
-   * 本地乐观增加浏览量
-   * @param {string} imageId - 图片 ID
-   * @deprecated 不应直接调用，统计已在 recordView 中处理
-   */
-  function incrementLocalView(imageId) {
-    incrementOptimistic(imageId, 'view')
-    // 不再修改 statsMap，避免重复计数
-  }
-
-  /**
-   * 本地乐观增加下载量
-   * @param {string} imageId - 图片 ID
-   * @deprecated 不应直接调用，统计已在 recordDownload 中处理
-   */
-  function incrementLocalDownload(imageId) {
-    incrementOptimistic(imageId, 'download')
-    // 不再修改 statsMap，避免重复计数
   }
 
   /**
@@ -214,11 +159,6 @@ export const usePopularityStore = defineStore('popularity', () => {
     loaded.value = false
   }
 
-  // 注册乐观更新回调，当 recordView/recordDownload 被调用时触发 UI 更新
-  onOptimisticUpdate(() => {
-    optimisticVersion.value++
-  })
-
   return {
     // State
     statsMap,
@@ -239,8 +179,6 @@ export const usePopularityStore = defineStore('popularity', () => {
     getDownloadCount,
     getViewCount,
     getPopularityScore,
-    incrementLocalView,
-    incrementLocalDownload,
     clearData,
   }
 })

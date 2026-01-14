@@ -122,16 +122,6 @@ const mobileViewModeSliderPosition = computed(() => {
   return viewMode.value === 'list' ? 'is-list' : 'is-grid'
 })
 
-// 激活的筛选数量（不含分类，分类单独显示）
-const activeFilterCount = computed(() => {
-  let count = 0
-  if (props.formatFilter !== 'all')
-    count++
-  if (props.sortBy !== 'newest')
-    count++
-  return count
-})
-
 // 当前分类显示文本
 const currentCategoryLabel = computed(() => {
   if (props.categoryFilter === 'all') {
@@ -450,7 +440,6 @@ function resetFilters() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
         </svg>
-        <span v-if="activeFilterCount > 0" class="filter-badge">{{ activeFilterCount }}</span>
       </button>
     </div>
 
@@ -465,78 +454,81 @@ function resetFilters() {
       @confirm="handleCategoryConfirm"
     />
 
-    <!-- 移动端筛选弹窗（格式+排序） -->
-    <van-popup
-      v-model:show="showFilterPopup"
-      position="bottom"
-      round
-      class="filter-popup-dark"
-      :close-on-click-overlay="true"
-      :lock-scroll="true"
-      :duration="0.3"
-      safe-area-inset-bottom
-    >
-      <div class="popup-content">
-        <!-- 弹窗头部 -->
-        <div class="popup-header">
-          <button class="popup-reset" @click="resetFilters">
-            重置
-          </button>
-          <span class="popup-title">筛选</span>
-          <button class="popup-close" @click="closeFilterPopup">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <!-- 移动端筛选弹窗（格式+排序）- 使用 Teleport 避免 z-index 层叠问题 -->
+    <Teleport to="body">
+      <van-popup
+        v-model:show="showFilterPopup"
+        position="bottom"
+        round
+        class="filter-popup-dark"
+        :close-on-click-overlay="true"
+        :lock-scroll="true"
+        :duration="0.3"
+        safe-area-inset-bottom
+        :teleport="false"
+      >
+        <div class="popup-content">
+          <!-- 弹窗头部 -->
+          <div class="popup-header">
+            <button class="popup-reset" @click="resetFilters">
+              重置
+            </button>
+            <span class="popup-title">筛选</span>
+            <button class="popup-close" @click="closeFilterPopup">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
-        <!-- 筛选选项 -->
-        <div class="popup-body">
-          <!-- 格式 -->
-          <div v-if="!hideFormatFilter" class="filter-group">
-            <h3 class="group-title">
-              格式
-            </h3>
-            <div class="option-grid">
-              <button
-                v-for="option in FORMAT_OPTIONS"
-                :key="option.value"
-                class="option-btn"
-                :class="{ 'is-active': tempFormatFilter === option.value }"
-                @click="tempFormatFilter = option.value"
-              >
-                {{ option.label }}
-              </button>
+          <!-- 筛选选项 -->
+          <div class="popup-body">
+            <!-- 格式 -->
+            <div v-if="!hideFormatFilter" class="filter-group">
+              <h3 class="group-title">
+                格式
+              </h3>
+              <div class="option-grid">
+                <button
+                  v-for="option in FORMAT_OPTIONS"
+                  :key="option.value"
+                  class="option-btn"
+                  :class="{ 'is-active': tempFormatFilter === option.value }"
+                  @click="tempFormatFilter = option.value"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- 排序 -->
+            <div class="filter-group">
+              <h3 class="group-title">
+                排序
+              </h3>
+              <div class="option-grid">
+                <button
+                  v-for="option in SORT_OPTIONS"
+                  :key="option.value"
+                  class="option-btn"
+                  :class="{ 'is-active': tempSortBy === option.value }"
+                  @click="tempSortBy = option.value"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- 排序 -->
-          <div class="filter-group">
-            <h3 class="group-title">
-              排序
-            </h3>
-            <div class="option-grid">
-              <button
-                v-for="option in SORT_OPTIONS"
-                :key="option.value"
-                class="option-btn"
-                :class="{ 'is-active': tempSortBy === option.value }"
-                @click="tempSortBy = option.value"
-              >
-                {{ option.label }}
-              </button>
-            </div>
+          <!-- 确认按钮 -->
+          <div class="popup-footer">
+            <button class="confirm-btn" @click="applyFilters">
+              确认筛选
+            </button>
           </div>
         </div>
-
-        <!-- 确认按钮 -->
-        <div class="popup-footer">
-          <button class="confirm-btn" @click="applyFilters">
-            确认筛选
-          </button>
-        </div>
-      </div>
-    </van-popup>
+      </van-popup>
+    </Teleport>
   </div>
 </template>
 
@@ -935,8 +927,8 @@ function resetFilters() {
   justify-content: center;
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -944,7 +936,7 @@ function resetFilters() {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
+  //  padding: 10px 16px;
   font-size: 14px;
   font-weight: 500;
   color: var(--color-text-primary);
