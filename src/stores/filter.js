@@ -217,6 +217,13 @@ export const useFilterStore = defineStore('filter', () => {
    * 应用排序
    */
   function applySort(wallpapers) {
+    // 如果排序依赖 popularityStore 但数据未加载完成，暂时使用日期排序（降级方案）
+    // 这样可以避免在数据加载过程中显示错误的排序结果，防止界面跳动
+    const needsPopularity = ['popular', 'downloads', 'views', 'weekly-hot', 'monthly-hot'].includes(sortBy.value)
+    if (needsPopularity && popularityStore.loading) {
+      return sortByDate(wallpapers, 'desc')
+    }
+
     switch (sortBy.value) {
       case 'newest':
         return sortByDate(wallpapers, 'desc')

@@ -1009,6 +1009,8 @@ function resetFilters() {
   display: flex;
   flex-direction: column;
   background: rgba(255, 255, 255, 0.95);
+  max-height: 80vh;
+  overflow: hidden;
 }
 
 .popup-header {
@@ -1073,6 +1075,9 @@ function resetFilters() {
 
 .popup-body {
   padding: 20px 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .filter-group {
