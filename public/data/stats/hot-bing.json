@@ -16,8 +16,8 @@
   },
   {
     "image_id": "bing-2026-01-01.jpg",
-    "views": 17,
-    "downloads": 2
+    "views": 19,
+    "downloads": 3
   },
   {
     "image_id": "bing-2026-01-06.jpg",
@@ -35,6 +35,11 @@
     "downloads": 3
   },
   {
+    "image_id": "bing-2026-01-15.jpg",
+    "views": 12,
+    "downloads": 0
+  },
+  {
     "image_id": "bing-2026-01-11.jpg",
     "views": 11,
     "downloads": 2
@@ -45,13 +50,8 @@
     "downloads": 1
   },
   {
-    "image_id": "bing-2026-01-15.jpg",
-    "views": 9,
-    "downloads": 0
-  },
-  {
     "image_id": "bing-2026-01-10.jpg",
-    "views": 8,
+    "views": 9,
     "downloads": 1
   },
   {
@@ -141,6 +141,11 @@
   },
   {
     "image_id": "bing-2025-11-21.jpg",
+    "views": 2,
+    "downloads": 0
+  },
+  {
+    "image_id": "bing-2026-01-17.jpg",
     "views": 2,
     "downloads": 0
   },
