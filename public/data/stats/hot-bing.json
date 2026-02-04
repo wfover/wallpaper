@@ -75,6 +75,11 @@
     "downloads": 0
   },
   {
+    "image_id": "bing-2026-02-01.jpg",
+    "views": 8,
+    "downloads": 0
+  },
+  {
     "image_id": "bing-2026-01-07.jpg",
     "views": 7,
     "downloads": 1
@@ -88,11 +93,6 @@
     "image_id": "bing-2025-12-31.jpg",
     "views": 7,
     "downloads": 2
-  },
-  {
-    "image_id": "bing-2026-02-01.jpg",
-    "views": 7,
-    "downloads": 0
   },
   {
     "image_id": "bing-2026-01-25.jpg",
@@ -125,6 +125,16 @@
     "downloads": 1
   },
   {
+    "image_id": "bing-2026-01-21.jpg",
+    "views": 4,
+    "downloads": 1
+  },
+  {
+    "image_id": "bing-2026-02-02.jpg",
+    "views": 4,
+    "downloads": 0
+  },
+  {
     "image_id": "bing-2025-12-23.jpg",
     "views": 3,
     "downloads": 0
@@ -145,6 +155,11 @@
     "downloads": 0
   },
   {
+    "image_id": "bing-2026-02-04.jpg",
+    "views": 3,
+    "downloads": 0
+  },
+  {
     "image_id": "2026-01-03.jpg",
     "views": 3,
     "downloads": 1
@@ -160,9 +175,9 @@
     "downloads": 1
   },
   {
-    "image_id": "bing-2026-01-21.jpg",
+    "image_id": "bing-2026-01-30.jpg",
     "views": 3,
-    "downloads": 1
+    "downloads": 0
   },
   {
     "image_id": "bing-2024-10-05.jpg",
@@ -270,12 +285,7 @@
     "downloads": 2
   },
   {
-    "image_id": "bing-2026-01-30.jpg",
-    "views": 2,
-    "downloads": 0
-  },
-  {
-    "image_id": "bing-2026-02-02.jpg",
+    "image_id": "bing-2026-02-03.jpg",
     "views": 2,
     "downloads": 0
   },
@@ -486,6 +496,11 @@
   },
   {
     "image_id": "bing-2025-04-27.jpg",
+    "views": 1,
+    "downloads": 0
+  },
+  {
+    "image_id": "bing-2026-01-31.jpg",
     "views": 1,
     "downloads": 0
   },
@@ -793,10 +808,5 @@
     "image_id": "bing-2025-07-06.jpg",
     "views": 1,
     "downloads": 1
-  },
-  {
-    "image_id": "bing-2026-02-03.jpg",
-    "views": 1,
-    "downloads": 0
   }
 ]
