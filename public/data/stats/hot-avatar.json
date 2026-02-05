@@ -180,6 +180,11 @@
     "downloads": 1
   },
   {
+    "image_id": "路飞打拳.jpg",
+    "views": 4,
+    "downloads": 3
+  },
+  {
     "image_id": "甜妹_花束少女.png",
     "views": 4,
     "downloads": 1
@@ -240,11 +245,6 @@
     "downloads": 2
   },
   {
-    "image_id": "路飞打拳.jpg",
-    "views": 3,
-    "downloads": 2
-  },
-  {
     "image_id": "牛牛拍头_噜噜不满.png",
     "views": 3,
     "downloads": 0
@@ -276,6 +276,11 @@
   },
   {
     "image_id": "噜噜靠肩_牛牛无奈.png",
+    "views": 3,
+    "downloads": 1
+  },
+  {
+    "image_id": "微信图片_20260119095917_476_4.jpg",
     "views": 3,
     "downloads": 1
   },
@@ -363,6 +368,11 @@
     "image_id": "哭脸小丸子.jpg",
     "views": 2,
     "downloads": 0
+  },
+  {
+    "image_id": "兔八哥_怒吼表情.jpg",
+    "views": 2,
+    "downloads": 1
   },
   {
     "image_id": "猫眼墨镜.jpg",
@@ -466,11 +476,6 @@
   },
   {
     "image_id": "蝴蝶结害羞.png",
-    "views": 2,
-    "downloads": 0
-  },
-  {
-    "image_id": "微信图片_20260119095917_476_4.jpg",
     "views": 2,
     "downloads": 0
   },
@@ -635,6 +640,16 @@
     "downloads": 0
   },
   {
+    "image_id": "微信图片_20260126155435_527_4.jpg",
+    "views": 2,
+    "downloads": 0
+  },
+  {
+    "image_id": "微信图片_2026-01-23_165124_953.png",
+    "views": 2,
+    "downloads": 1
+  },
+  {
     "image_id": "微信图片_20260126155237_72_1186.jpg",
     "views": 2,
     "downloads": 0
@@ -678,11 +693,6 @@
     "image_id": "帅气-张凌赫.jpg",
     "views": 1,
     "downloads": 0
-  },
-  {
-    "image_id": "兔八哥_怒吼表情.jpg",
-    "views": 1,
-    "downloads": 1
   },
   {
     "image_id": "圣诞帽男孩托腮.jpg",
@@ -1065,11 +1075,6 @@
     "downloads": 1
   },
   {
-    "image_id": "微信图片_2026-01-23_165124_953.png",
-    "views": 1,
-    "downloads": 1
-  },
-  {
     "image_id": "微信图片_2026-01-23_165339_916.jpg",
     "views": 1,
     "downloads": 1
@@ -1078,11 +1083,6 @@
     "image_id": "微信图片_2026-01-23_165349_820.jpg",
     "views": 1,
     "downloads": 1
-  },
-  {
-    "image_id": "微信图片_20260126155435_527_4.jpg",
-    "views": 1,
-    "downloads": 0
   },
   {
     "image_id": "小熊_坐泳圈.png",
@@ -1113,5 +1113,10 @@
     "image_id": "微信图片_20260126155445_539_4.jpg",
     "views": 1,
     "downloads": 1
+  },
+  {
+    "image_id": "微信图片_20260120161534_480_4.jpg",
+    "views": 1,
+    "downloads": 0
   }
 ]
