@@ -105,6 +105,11 @@
     "downloads": 0
   },
   {
+    "image_id": "bing-2026-02-04.jpg",
+    "views": 4,
+    "downloads": 0
+  },
+  {
     "image_id": "bing-2026-01-17.jpg",
     "views": 4,
     "downloads": 0
@@ -151,11 +156,6 @@
   },
   {
     "image_id": "bing-2025-12-28.jpg",
-    "views": 3,
-    "downloads": 0
-  },
-  {
-    "image_id": "bing-2026-02-04.jpg",
     "views": 3,
     "downloads": 0
   },
@@ -808,5 +808,10 @@
     "image_id": "bing-2025-07-06.jpg",
     "views": 1,
     "downloads": 1
+  },
+  {
+    "image_id": "bing-2026-02-06.jpg",
+    "views": 1,
+    "downloads": 0
   }
 ]
